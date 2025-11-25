@@ -43,11 +43,12 @@ const navItems = [
   },
 
   // Doctor
-  { label: "Doctors Patient", path: "/dashboard/doctorspatient", icon: Users, roles: ["DOCTOR"] },
-  { label: "Doctors Appointments", path: "/dashboard/doctorsappointment", icon: Calendar, roles: ["DOCTOR"] },
-  { label: "Doctors Prescriptions", path: "/dashboard/doctors-prescriptions", icon: FileText, roles: ["DOCTOR"] },
-  { label: "Doctors Laboratory", path: "/dashboard/doctors-laboratory", icon: FlaskConical, roles: ["DOCTOR"] },
-  { label: "Doctors Radiology", path: "/dashboard/doctors-radiology", icon: Activity, roles: ["DOCTOR"] },
+  { label: "Patient", path: "/dashboard/doctorspatient", icon: Users, roles: ["DOCTOR"] },
+  { label: "Appointments", path: "/dashboard/doctorsappointment", icon: Calendar, roles: ["DOCTOR"] },
+  { label: "Prescriptions", path: "/dashboard/doctors-prescriptions", icon: FileText, roles: ["DOCTOR"] },
+  { label: "Laboratory", path: "/dashboard/doctors-laboratory", icon: FlaskConical, roles: ["DOCTOR"] },
+  { label: "Radiology", path: "/dashboard/doctors-radiology", icon: Activity, roles: ["DOCTOR"] },
+  { label: "Pharmacy", path: "/dashboard/doctor-pharmacy", icon: Pill, roles: ["DOCTOR"] },
   // Nurse
   { label: "Nurse Patient", path: "/dashboard/nursepatient", icon: Users, roles: ["NURSE"] },
   { label: "Nurse Prescriptions", path: "/dashboard/nurse-prescriptions", icon: FileText, roles: ["NURSE"] },
@@ -56,19 +57,19 @@ const navItems = [
   // Pharmacist
   { label: "Pharmacist Pharmacy", path: "/dashboard/pharmacist-pharmacy", icon: Pill, roles: ["PHARMACIST"] },
   // Common
-  { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN", "RECEPTIONIST"] },
+  { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN"] },
   { label: "Department", path: "/dashboard/department", icon: Blocks, roles: ["ADMIN"] },
-  { label: "Appointments", path: "/dashboard/appointments", icon: Calendar, roles: ["ADMIN", "RECEPTIONIST"] },
+  { label: "Appointments", path: "/dashboard/appointments", icon: Calendar, roles: ["ADMIN"] },
   { label: "Prescriptions", path: "/dashboard/prescriptions", icon: FileText, roles: ["ADMIN"] },
-  { label: "Pharmacy", path: "/dashboard/pharmacy", icon: Pill, roles: ["ADMIN", "PHARMACIST"] },
-  { label: "Laboratory", path: "/dashboard/laboratory", icon: FlaskConical, roles: ["ADMIN", "DOCTOR", "LAB_TECH"] },
-  { label: "Radiology", path: "/dashboard/radiology", icon: Activity, roles: ["ADMIN", "DOCTOR", "RADIOLOGIST"] },
-  { label: "Billing", path: "/dashboard/billing", icon: DollarSign, roles: ["ADMIN", "RECEPTIONIST", "FINANCE"] },
-  { label: "Staff", path: "/dashboard/staff", icon: UserCog, roles: ["ADMIN", "HR"] },
-  { label: "Staff Attendance", path: "/dashboard/staffattendance", icon: Users, roles: ["ADMIN", "HR"] },
-  { label: "Reports", path: "/dashboard/reports", icon: ClipboardList, roles: ["ADMIN", "FINANCE", "AUDITOR"] },
-  { label: "Location Tracker", path: "/dashboard/locationtracker", icon: MapPin, roles: ["ADMIN", "HR", "RECEPTIONIST"] },
-  { label: "Beacon Manager", path: "/dashboard/beaconmanager", icon: RadioTower, roles: ["ADMIN", "HR", "RECEPTIONIST"] },
+  { label: "Pharmacy", path: "/dashboard/pharmacy", icon: Pill, roles: ["ADMIN"] },
+  { label: "Laboratory", path: "/dashboard/laboratory", icon: FlaskConical, roles: ["ADMIN", "LAB_TECH"] },
+  { label: "Radiology", path: "/dashboard/radiology", icon: Activity, roles: ["ADMIN", "RADIOLOGIST"] },
+  { label: "Billing", path: "/dashboard/billing", icon: DollarSign, roles: ["ADMIN"] },
+  { label: "Staff", path: "/dashboard/staff", icon: UserCog, roles: ["ADMIN"] },
+  { label: "Staff Attendance", path: "/dashboard/staffattendance", icon: Users, roles: ["ADMIN"] },
+  { label: "Reports", path: "/dashboard/reports", icon: ClipboardList, roles: ["ADMIN"] },
+  { label: "Location Tracker", path: "/dashboard/locationtracker", icon: MapPin, roles: ["ADMIN"] },
+  { label: "Beacon Manager", path: "/dashboard/beaconmanager", icon: RadioTower, roles: ["ADMIN"] },
 ];
 
 // =======================================

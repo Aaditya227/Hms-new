@@ -227,6 +227,7 @@ const DoctorsAppointment = lazyImport(() => import("./pages/DoctorsAppointments"
 const DoctorsPrescriptions = lazyImport(() => import("./pages/DoctorsPrescriptions"));
 const DoctorsRadiology = lazyImport(() => import("./pages/DoctorsRadiology"));
 const DoctorsLaboratory = lazyImport(() => import("./pages/DoctorsLaboratory"));
+const DoctorPharmacy = lazyImport(() => import("./pages/DoctorPharmacy"));
 const Appointments = lazyImport(() => import("./pages/Appointments"));
 const Prescriptions = lazyImport(() => import("./pages/Prescriptions"));
 const Pharmacy = lazyImport(() => import("./pages/Pharmacy"));
@@ -342,8 +343,9 @@ function App() {
                 { path: "doctorspatient", Component: DoctorsPatient },
                 {path: "doctorsappointment", Component: DoctorsAppointment },
                 {patch: "doctors-prescription", Component: DoctorsPrescriptions},
-                 {path: "doctors-radiology", Component: DoctorsRadiology },
+                {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
+                { path: "doctor-pharmacy", Component: DoctorPharmacy },
    // doctors end route// 
 
                  //Nurse routes//
