@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-=======
-
-// update
-
->>>>>>> 4e530a7c4d28aa08265a7ec87a8189b746beb0f9
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Users, Plus, Search, Edit2, Eye, Trash2 } from "../lib/icons";
@@ -331,7 +325,7 @@ export function Patients() {
           <PatientRegistrationForm
             patient={apiPatientToForm(selectedPatient)}
             patientId={selectedPatient.id} // ✅ Pass ID separately
-            onSuccess={(formData) => handleEditSuccess(formData, selectedPatient.id)} // ✅ Safe!
+           onSuccess={(formData) => handleEditSuccess(formData, selectedPatient.id)} // ✅ Safe!
           />
         )}
       </Modal>

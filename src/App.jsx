@@ -154,12 +154,9 @@ function App() {
                 {patch: "doctors-prescription", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
-<<<<<<< HEAD
                 // doctors end route// 
-=======
                 { path: "doctor-pharmacy", Component: DoctorPharmacy },
    // doctors end route// 
->>>>>>> 43fcfc8163b000b0d7f254ea9c207a39a528ed24
 
                  //Nurse routes//
 

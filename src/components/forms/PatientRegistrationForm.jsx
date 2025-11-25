@@ -24,11 +24,8 @@ const calculateAge = (dob) => {
   return age >= 0 ? age : "";
 };
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> 4e530a7c4d28aa08265a7ec87a8189b746beb0f9
 export const createPatient = async (data) => {
   const response = await axios.post(`${base_url}/patients`, data);
   return response.data;
