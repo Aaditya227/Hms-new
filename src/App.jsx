@@ -206,7 +206,7 @@ const DashboardLayout = lazyImport(() => import("./components/layouts/DashboardL
 
 //  Role-based Dashboards
 const dashboards = {
-  Admin: lazyImport(() => import("./pages/dashboard/AdminDashboard")),
+  ADMIN: lazyImport(() => import("./pages/dashboard/AdminDashboard")),
   DOCTOR: lazyImport(() => import("./pages/dashboard/DoctorDashboard")),
   NURSE: lazyImport(() => import("./pages/dashboard/NurseDashboard")),
   RECEPTIONIST: lazyImport(() => import("./pages/dashboard/ReceptionistDashboard")),
