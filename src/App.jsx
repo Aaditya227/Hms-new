@@ -200,6 +200,7 @@ import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { BeaconManager } from "./pages/BeaconManager";
 
 
+
 //  Login + Layout
 const Login = lazyImport(() => import("./pages/Login"));
 const DashboardLayout = lazyImport(() => import("./components/layouts/DashboardLayout"));
@@ -237,7 +238,13 @@ const Reports = lazyImport(() => import("./pages/Reports"));
 const LocationTracker = lazyImport(() => import("./pages/LocationTracker"));
 const Department = lazyImport(() => import("./pages/Department"));
 const staffAttendance = lazyImport(() => import("./pages/StaffAttendance"));
-
+//patient 
+const PatientsAppointments = lazyImport(() => import("./pages/PatientsAppointments"));
+//Nurse
+const NursePrescriptions = lazyImport(() => import("./pages/NursePrescriptions"));
+const NursePatient = lazyImport(() => import("./pages/NursePatient"));
+//Pharmacist
+const PharmacistPharmacy = lazyImport(() => import("./pages/PharmacistPharmacy"));
 
 /* ------------------ Loader ------------------ */
 const LoadingFallback = () => (
@@ -338,6 +345,19 @@ function App() {
                  {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
    // doctors end route// 
+
+                 //Nurse routes//
+
+                { path: "nursepatient", Component: NursePatient },
+                {path: "nurse-prescription", Component: NursePrescriptions},
+                
+                // patient routes//
+
+                {path: "patientsappointment", Component: PatientsAppointments },
+
+                //Phasrmacist routes//
+
+                { path: "pharmacist-pharmacy", Component: PharmacistPharmacy },
 
 
                 { path: "appointments", Component: Appointments },
