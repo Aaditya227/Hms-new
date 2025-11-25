@@ -53,7 +53,7 @@ const navItems = [
   { label: "Nurse Patient", path: "/dashboard/nursepatient", icon: Users, roles: ["NURSE"] },
   { label: "Nurse Prescriptions", path: "/dashboard/nurse-prescriptions", icon: FileText, roles: ["NURSE"] },
   // patient
-  { label: "Patients Appointments", path: "/dashboard/patients-appointments", icon: Calendar, roles: ["PATIENT"] },
+  { label: "Appointments", path: "/dashboard/patients-appointments", icon: Calendar, roles: ["PATIENT"] },
   // Pharmacist
   { label: "Pharmacist Pharmacy", path: "/dashboard/pharmacist-pharmacy", icon: Pill, roles: ["PHARMACIST"] },
   // Common
