@@ -136,8 +136,8 @@ export function AppointmentBookingForm({ onSuccess, initialData, isEdit }) {
           <option value="">Select Doctor</option>
           {doctors.map((d) => (
            <option key={d.id} value={d.id}>
-  {d.fullName} ({d.department})
-</option>
+          {d.fullName} ({d.department})
+        </option>
 
           ))}
         </select>

@@ -30,14 +30,7 @@ const calculateAge = (dob) => {
   return age >= 0 ? age : ""; // Return empty string for future dates or invalid DOB
 };
 
-// const createPatient = async (data) => {
-//     return new Promise(resolve => setTimeout(() => resolve({ 
-//         ...data,
-//         id: Date.now(), 
-//         upid: "UPID" + Date.now(),
-//         status: data.status || "OPD",
-//     }), 500));
-// };
+
 
 export const createPatient = async (data) => {
   const response = await axios.post(`${base_url}/patients`, data);
