@@ -48,12 +48,18 @@ const navItems = [
   { label: "Doctors Prescriptions", path: "/dashboard/doctors-prescriptions", icon: FileText, roles: ["DOCTOR"] },
   { label: "Doctors Laboratory", path: "/dashboard/doctors-laboratory", icon: FlaskConical, roles: ["DOCTOR"] },
   { label: "Doctors Radiology", path: "/dashboard/doctors-radiology", icon: Activity, roles: ["DOCTOR"] },
-
+  // Nurse
+  { label: "Nurse Patient", path: "/dashboard/nursepatient", icon: Users, roles: ["NURSE"] },
+  { label: "Nurse Prescriptions", path: "/dashboard/nurse-prescriptions", icon: FileText, roles: ["NURSE"] },
+  // patient
+  { label: "Patients Appointments", path: "/dashboard/patients-appointments", icon: Calendar, roles: ["PATIENT"] },
+  // Pharmacist
+  { label: "Pharmacist Pharmacy", path: "/dashboard/pharmacist-pharmacy", icon: Pill, roles: ["PHARMACIST"] },
   // Common
-  { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN", "NURSE", "RECEPTIONIST"] },
+  { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN", "RECEPTIONIST"] },
   { label: "Department", path: "/dashboard/department", icon: Blocks, roles: ["ADMIN"] },
   { label: "Appointments", path: "/dashboard/appointments", icon: Calendar, roles: ["ADMIN", "RECEPTIONIST"] },
-  { label: "Prescriptions", path: "/dashboard/prescriptions", icon: FileText, roles: ["ADMIN", "DOCTOR", "PHARMACIST"] },
+  { label: "Prescriptions", path: "/dashboard/prescriptions", icon: FileText, roles: ["ADMIN"] },
   { label: "Pharmacy", path: "/dashboard/pharmacy", icon: Pill, roles: ["ADMIN", "PHARMACIST"] },
   { label: "Laboratory", path: "/dashboard/laboratory", icon: FlaskConical, roles: ["ADMIN", "DOCTOR", "LAB_TECH"] },
   { label: "Radiology", path: "/dashboard/radiology", icon: Activity, roles: ["ADMIN", "DOCTOR", "RADIOLOGIST"] },
