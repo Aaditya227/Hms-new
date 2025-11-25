@@ -1,12 +1,16 @@
+<<<<<<< HEAD
 
 // update
 
+=======
+>>>>>>> 43fcfc8163b000b0d7f254ea9c207a39a528ed24
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Plus, Edit2, Trash2, Eye } from "../lib/icons";
 import { Button } from "../components/common/Button";
 import { DataTable } from "../components/common/DataTable";
 import base_url from "../utils/baseurl";
+import Swal from "sweetalert2";
 
 export function Department() {
   const API_URL = `${base_url}/departments`;
@@ -16,24 +20,33 @@ export function Department() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [selectedDept, setSelectedDept] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewDept, setViewDept] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
+    type: "",
     code: "",
     description: "",
-    type: "",
-    isActive: true,
+    status: 1, // Default to active (1)
   });
 
   const fetchDepartments = async () => {
     try {
       const res = await axios.get(API_URL);
-      setDepartments(res.data);
+      // Adjusting to match the API response structure
+      if (res.data.success) {
+        setDepartments(res.data.data);
+      }
     } catch (err) {
       console.error("❌ Error fetching departments:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to fetch departments. Please try again.",
+      });
     }
   };
 
@@ -43,41 +56,120 @@ export function Department() {
 
   const handleAddDepartment = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      await axios.post(API_URL, formData);
-      alert("✅ Department created successfully!");
-      setIsModalOpen(false);
-      fetchDepartments();
+      // Format the data to match what the API expects
+      const departmentData = {
+        name: formData.name,
+        type: formData.type,
+        code: formData.code,
+        description: formData.description,
+        status: formData.status ? 1 : 0, // Convert boolean to 1/0
+      };
+
+      const res = await axios.post(API_URL, departmentData);
+      if (res.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Department created successfully!",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        setIsModalOpen(false);
+        fetchDepartments();
+        // Reset form
+        setFormData({
+          name: "",
+          type: "",
+          code: "",
+          description: "",
+          status: 1,
+        });
+      }
     } catch (err) {
       console.error("❌ Error creating department:", err);
-      alert(err.response?.data?.message || "Failed to create department.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.response?.data?.message || "Failed to create department.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEditDepartment = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      await axios.put(`${API_URL}/${selectedDept.id}`, formData);
-      alert("✅ Department updated successfully!");
-      setIsModalOpen(false);
-      fetchDepartments();
+      // Format the data to match what the API expects
+      const departmentData = {
+        name: formData.name,
+        type: formData.type,
+        code: formData.code,
+        description: formData.description,
+        status: formData.status ? 1 : 0, // Convert boolean to 1/0
+      };
+
+      const res = await axios.put(`${API_URL}/${selectedDept.id}`, departmentData);
+      if (res.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Department updated successfully!",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        setIsModalOpen(false);
+        fetchDepartments();
+      }
     } catch (err) {
       console.error("❌ Error updating department:", err);
-      alert("Failed to update department.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.response?.data?.message || "Failed to update department.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure to delete this department?")) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
 
-    try {
-      await axios.delete(`${API_URL}/${id}`);
-      alert("🗑️ Department deleted successfully!");
-      fetchDepartments();
-    } catch (err) {
-      console.error("❌ Error deleting department:", err);
+    if (result.isConfirmed) {
+      try {
+        const res = await axios.delete(`${API_URL}/${id}`);
+        if (res.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Deleted!",
+            text: "Department has been deleted.",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+          fetchDepartments();
+        }
+      } catch (err) {
+        console.error("❌ Error deleting department:", err);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete department.",
+        });
+      }
     }
   };
 
@@ -85,10 +177,10 @@ export function Department() {
     setModalMode("add");
     setFormData({
       name: "",
+      type: "",
       code: "",
       description: "",
-      type: "",
-      isActive: true,
+      status: 1,
     });
     setIsModalOpen(true);
   };
@@ -97,12 +189,20 @@ export function Department() {
     setModalMode("edit");
     setSelectedDept(dept);
 
+    // Handle both possible status formats: string ("active"/"inactive") or number (1/0)
+    let statusValue;
+    if (typeof dept.status === 'string') {
+      statusValue = dept.status === "active" ? 1 : 0;
+    } else {
+      statusValue = dept.status === 1 ? 1 : 0;
+    }
+
     setFormData({
       name: dept.name || "",
+      type: dept.type || "",
       code: dept.code || "",
       description: dept.description || "",
-      type: dept.type,
-      isActive: dept.isActive,
+      status: statusValue,
     });
 
     setIsModalOpen(true);
@@ -122,6 +222,30 @@ export function Department() {
       d.type.toLowerCase().includes(s)
     );
   });
+
+  // Helper function to determine status display
+  const getStatusDisplay = (status) => {
+    // Handle both possible status formats: string ("active"/"inactive") or number (1/0)
+    if (typeof status === 'string') {
+      return status === "active" ? "Active" : "Inactive";
+    } else {
+      return status === 1 ? "Active" : "Inactive";
+    }
+  };
+
+  // Helper function to determine status class
+  const getStatusClass = (status) => {
+    // Handle both possible status formats: string ("active"/"inactive") or number (1/0)
+    if (typeof status === 'string') {
+      return status === "active" 
+        ? "bg-green-100 text-green-600" 
+        : "bg-gray-200 text-gray-600";
+    } else {
+      return status === 1 
+        ? "bg-green-100 text-green-600" 
+        : "bg-gray-200 text-gray-600";
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -164,13 +288,9 @@ export function Department() {
               header: "Status",
               accessor: (d) => (
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    d.isActive
-                      ? "bg-green-100 text-green-600"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusClass(d.status)}`}
                 >
-                  {d.isActive ? "Active" : "Inactive"}
+                  {getStatusDisplay(d.status)}
                 </span>
               ),
             },
@@ -178,7 +298,6 @@ export function Department() {
               header: "Actions",
               accessor: (row) => (
                 <div className="flex items-center gap-2">
-
                   <button
                     onClick={() => openViewModal(row)}
                     className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
@@ -227,7 +346,7 @@ export function Department() {
               <p><strong>Description:</strong> {viewDept?.description}</p>
               <p>
                 <strong>Status:</strong>{" "}
-                {viewDept?.isActive ? "Active" : "Inactive"}
+                {viewDept ? getStatusDisplay(viewDept.status) : ""}
               </p>
             </div>
           </div>
@@ -302,35 +421,42 @@ export function Department() {
                     setFormData({ ...formData, type: e.target.value })
                   }
                   className="w-full border rounded-lg p-2"
+                  required
                 >
                   <option value="">Select Type</option>
                   <option value="CLINICAL">Clinical</option>
                   <option value="NON_CLINICAL">Non-Clinical</option>
                   <option value="SUPPORT">Support</option>
                   <option value="ADMIN">Admin</option>
+                  <option value="Medical">Medical</option>
                 </select>
               </div>
 
               <div className="flex items-center gap-2 mt-2">
                 <input
                   type="checkbox"
-                  checked={formData.isActive}
+                  checked={formData.status === 1}
                   onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
+                    setFormData({ ...formData, status: e.target.checked ? 1 : 0 })
                   }
                 />
                 <label>Active</label>
               </div>
 
-              <Button type="submit" className="w-full mt-4">
-                {modalMode === "add" ? "Create Department" : "Save Changes"}
+              <Button 
+                type="submit" 
+                className="w-full mt-4"
+                disabled={loading}
+              >
+                {loading 
+                  ? (modalMode === "add" ? "Creating..." : "Updating...") 
+                  : (modalMode === "add" ? "Create Department" : "Save Changes")
+                }
               </Button>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }
-

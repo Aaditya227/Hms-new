@@ -9,6 +9,7 @@ import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { BeaconManager } from "./pages/BeaconManager";
 
 
+
 //  Login + Layout
 const Login = lazyImport(() => import("./pages/Login"));
 const DashboardLayout = lazyImport(() => import("./components/layouts/DashboardLayout"));
@@ -35,6 +36,7 @@ const DoctorsAppointment = lazyImport(() => import("./pages/DoctorsAppointments"
 const DoctorsPrescriptions = lazyImport(() => import("./pages/DoctorsPrescriptions"));
 const DoctorsRadiology = lazyImport(() => import("./pages/DoctorsRadiology"));
 const DoctorsLaboratory = lazyImport(() => import("./pages/DoctorsLaboratory"));
+const DoctorPharmacy = lazyImport(() => import("./pages/DoctorPharmacy"));
 const Appointments = lazyImport(() => import("./pages/Appointments"));
 const Prescriptions = lazyImport(() => import("./pages/Prescriptions"));
 const Pharmacy = lazyImport(() => import("./pages/Pharmacy"));
@@ -46,7 +48,13 @@ const Reports = lazyImport(() => import("./pages/Reports"));
 const LocationTracker = lazyImport(() => import("./pages/LocationTracker"));
 const Department = lazyImport(() => import("./pages/Department"));
 const staffAttendance = lazyImport(() => import("./pages/StaffAttendance"));
-
+//patient 
+const PatientsAppointments = lazyImport(() => import("./pages/PatientsAppointments"));
+//Nurse
+const NursePrescriptions = lazyImport(() => import("./pages/NursePrescriptions"));
+const NursePatient = lazyImport(() => import("./pages/NursePatient"));
+//Pharmacist
+const PharmacistPharmacy = lazyImport(() => import("./pages/PharmacistPharmacy"));
 
 /* ------------------ Loader ------------------ */
 const LoadingFallback = () => (
@@ -146,7 +154,25 @@ function App() {
                 {patch: "doctors-prescription", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
+<<<<<<< HEAD
                 // doctors end route// 
+=======
+                { path: "doctor-pharmacy", Component: DoctorPharmacy },
+   // doctors end route// 
+>>>>>>> 43fcfc8163b000b0d7f254ea9c207a39a528ed24
+
+                 //Nurse routes//
+
+                { path: "nursepatient", Component: NursePatient },
+                {path: "nurse-prescription", Component: NursePrescriptions},
+                
+                // patient routes//
+
+                {path: "patientsappointment", Component: PatientsAppointments },
+
+                //Phasrmacist routes//
+
+                { path: "pharmacist-pharmacy", Component: PharmacistPharmacy },
 
 
                 { path: "appointments", Component: Appointments },

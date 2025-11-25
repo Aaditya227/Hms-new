@@ -1,10 +1,3 @@
-
-
-
-
-// update
-
-
 import React, { useState, useEffect } from "react";
 import { FlaskConical, Search, Plus, FileCheck, Trash2, Edit2 } from "../lib/icons";
 import { Button } from "../components/common/Button";
