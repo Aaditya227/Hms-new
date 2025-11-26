@@ -50,6 +50,8 @@ const Department = lazyImport(() => import("./pages/Department"));
 const staffAttendance = lazyImport(() => import("./pages/StaffAttendance"));
 //patient 
 const PatientsAppointments = lazyImport(() => import("./pages/PatientsAppointments"));
+const PatientPrescription = lazyImport(() => import("./pages/PatientPrescription"));
+const PatientDoctor = lazyImport(() => import("./pages/PatientDoctor"));
 //Nurse
 const NursePrescriptions = lazyImport(() => import("./pages/NursePrescriptions"));
 const NursePatient = lazyImport(() => import("./pages/NursePatient"));
@@ -166,6 +168,8 @@ function App() {
                 // patient routes//
 
                 {path: "patientsappointment", Component: PatientsAppointments },
+                {patch: "patient-prescription", Component: PatientPrescription},
+                { path: "patient-doctor", Component: PatientDoctor },
 
                 //Phasrmacist routes//
 
