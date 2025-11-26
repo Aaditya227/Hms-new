@@ -58,12 +58,16 @@ const PatientPaymentHistory = lazyImport(() => import("./pages/PatientPaymentHis
 //Nurse
 const NursePrescriptions = lazyImport(() => import("./pages/NursePrescriptions"));
 const NursePatient = lazyImport(() => import("./pages/NursePatient"));
+const NurseRadiologyReport = lazyImport(() => import("./pages/NurseRadiologyReport"));
+const NurseLabReport = lazyImport(() => import("./pages/NurseLabReport"));
 //Pharmacist
 const PharmacistPharmacy = lazyImport(() => import("./pages/PharmacistPharmacy"));
 //Lab Tech
-const LabTechLabTest = lazyImport(() => import("./pages/LabTechLabTest"));
+const LabRequest = lazyImport(() => import("./pages/LabRequest"));
+const LabReport = lazyImport(() => import("./pages/LabReport"));
 //Radiologist
-const RadiologistRadiologyTest = lazyImport(() => import("./pages/RadiologistRadiologyTest"));
+const RadiologyRequest = lazyImport(() => import("./pages/RadiologyRequest"));
+const RadiologyReport = lazyImport(() => import("./pages/RadiologyReport"));
 /* ------------------ Loader ------------------ */
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-hospital-purple/20 via-white to-teal-500/20 flex items-center justify-center">
@@ -170,6 +174,8 @@ function App() {
 
                 { path: "nursepatient", Component: NursePatient },
                 {path: "nurse-prescription", Component: NursePrescriptions},
+                {path: "nurse-radiology-report", Component: NurseRadiologyReport },
+                {path: "nurse-lab-report", Component: NurseLabReport},
                 
                 // patient routes//
 
@@ -186,11 +192,13 @@ function App() {
 
                 //Lab Tech routes//
 
-                {path: "labtech-labtest", Component: LabTechLabTest},
+                {path: "lab-request", Component: LabRequest},
+                {path: "lab-report", Component: LabReport},
 
                 //Radiologist routes//
                 
-                {path: "radiologist-radiologytest", Component: RadiologistRadiologyTest},
+                {path: "radiology-request", Component: RadiologyRequest},
+                {path: "radiology-report", Component: RadiologyReport},
 
                 { path: "appointments", Component: Appointments },
                 

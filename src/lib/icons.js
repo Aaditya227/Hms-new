@@ -37,6 +37,7 @@ export {
   UserCog,
   UserPlus,
   Users,
+  Check,
   Thermometer,
   TrendingUp,
   AlertCircle,
