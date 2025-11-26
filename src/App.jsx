@@ -163,7 +163,7 @@ function App() {
                 // doctors  routes//
                 { path: "doctorspatient", Component: DoctorsPatient },
                 {path: "doctorsappointment", Component: DoctorsAppointment },
-                {patch: "doctors-prescription", Component: DoctorsPrescriptions},
+                {patch: "doctors-prescriptions", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
                 // doctors end route// 
