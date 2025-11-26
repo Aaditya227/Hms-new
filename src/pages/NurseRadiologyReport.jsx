@@ -5,7 +5,7 @@ import { Modal } from "../components/common/Modal";
 import base_url from "../utils/baseurl";
 import { Eye, Trash2, Search } from "lucide-react";
 
-export default function PatientRadiologyReport() {
+export default function NurseRadiologyReport() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

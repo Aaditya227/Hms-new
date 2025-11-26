@@ -5,7 +5,7 @@ import { Modal } from "../components/common/Modal";
 import base_url from "../utils/baseurl";
 import { Eye, Trash2, Search } from "lucide-react";
 
-export default function PatientRadiologyReport() {
+export default function NurseLabReport() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,10 +21,10 @@ export default function PatientRadiologyReport() {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${base_url}/radiologyreports`);
+      const res = await axios.get(`${base_url}/labreports`);
       setReports(res.data.data || []);
     } catch (error) {
-      console.error("Error fetching radiology reports:", error);
+      console.error("Error fetching lab reports:", error);
     } finally {
       setLoading(false);
     }
@@ -35,10 +35,10 @@ export default function PatientRadiologyReport() {
     if (!window.confirm("Are you sure you want to delete this report?")) return;
 
     try {
-      await axios.delete(`${base_url}/radiologyreports/${id}`);
+      await axios.delete(`${base_url}/labreports/${id}`);
       setReports((prev) => prev.filter((r) => r.id !== id));
     } catch (error) {
-      console.error("Error deleting radiology report:", error);
+      console.error("Error deleting lab report:", error);
     }
   };
 
@@ -52,7 +52,7 @@ export default function PatientRadiologyReport() {
   if (loading)
     return (
       <p className="text-center py-8 text-gray-500">
-        Loading radiology reports...
+        Loading lab reports...
       </p>
     );
 
@@ -62,10 +62,10 @@ export default function PatientRadiologyReport() {
       <div className="flex flex-wrap items-center justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-display font-bold text-gray-900">
-            Patient Radiology Reports
+            Patient Lab Reports
           </h1>
           <p className="text-gray-600 mt-1">
-            View radiology test results and report information
+            View lab test results and report information
           </p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function PatientRadiologyReport() {
         {/* Table */}
         {filteredReports.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
-            No radiology reports found.
+            No lab reports found.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -189,7 +189,7 @@ export default function PatientRadiologyReport() {
           setViewModalOpen(false);
           setSelectedReport(null);
         }}
-        title="Radiology Report Details"
+        title="Lab Report Details"
       >
         {selectedReport && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">

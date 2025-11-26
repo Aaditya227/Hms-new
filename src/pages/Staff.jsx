@@ -1,5 +1,3 @@
-// update
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Plus, Edit2, Eye, Trash2 } from "../lib/icons";
@@ -74,11 +72,10 @@ export function Staff() {
     date_joined: "",
     license_number  : "",
     role_id: "",
-    // role_title: "", // इस फ़ील्ड को वापस जोड़ें
     is_active: true,
   });
 
-  // Function to format date to yyyy-mm-dd
+  // Function to format date to yyyy-mm-dd for API
   const formatDateToYYYYMMDD = (dateString) => {
     if (!dateString) return "";
     
@@ -99,6 +96,22 @@ export function Staff() {
     }
   };
 
+  // Function to format date for display in input fields (yyyy-mm-dd)
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    
+    try {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error("Error formatting date for input:", error);
+      return "";
+    }
+  };
+
   // ✅ Add Employee
   const handleAddStaff = async (e) => {
     e.preventDefault();
@@ -114,20 +127,12 @@ export function Staff() {
       return;
     }
 
-    // चयनित भूमिका का नाम प्राप्त करें
-    const selectedRole = roles.find(r => r.id === parseInt(formData.role_id));
-    // const roleTitle = selectedRole ? (selectedRole.name || selectedRole.title || selectedRole.role) : "";
-
     try {
       const res = await axios.post(API_URL, {
         ...formData,
-        // role_title फ़ील्ड वापस जोड़ें
-        // role_title: roleTitle,
-        // backend expects `department_id` — ensure we send the correct key
         department_id: Number(formData.department_id),
-        // backend expects numeric 1/0 for active flag
         is_active: formData.is_active ? 1 : 0,
-        // Format the date to yyyy-mm-dd
+        // Format the date to yyyy-mm-dd for API
         dob: formatDateToYYYYMMDD(formData.dob),
         date_joined: formatDateToYYYYMMDD(formData.date_joined),
       });
@@ -153,23 +158,15 @@ export function Staff() {
       return;
     }
     
-    // चयनित भूमिका का नाम प्राप्त करें
-    const selectedRole = roles.find(r => r.id === parseInt(formData.role_id));
-    const roleTitle = selectedRole ? (selectedRole.name || selectedRole.title || selectedRole.role) : "";
-    
     try {
       const res = await axios.patch(`${API_URL}/${selectedStaff.employee_id}`, {
         ...formData,
-        // role_title फ़ील्ड वापस जोड़ें
-        // role_title: roleTitle,
-        department_id: Number(formData.department_id), // ensure numeric and correct key
-        // backend expects numeric 1/0 for active flag
+        department_id: Number(formData.department_id),
         is_active: formData.is_active ? 1 : 0,
-        // Format the date to yyyy-mm-dd
+        // Format the date to yyyy-mm-dd for API
         dob: formatDateToYYYYMMDD(formData.dob),
         date_joined: formatDateToYYYYMMDD(formData.date_joined),
         user: {
-          // Keep payload similar to backend expectations; adapt if your API differs
           firstName: formData.first_name,
           lastName: formData.last_name,
           phone: formData.phone,
@@ -216,29 +213,19 @@ export function Staff() {
       qualification: "",
       experience: "",
       date_joined: "",
-      // role_title: "", // इस फ़ील्ड को वापस जोड़ें
       is_active: true,
     });
     setIsModalOpen(true);
   };
 
   const openEditModal = (staff) => {
-    // Defensive: wrap extraction in try/catch to avoid render-time crashes
     try {
       setModalMode("edit");
       setSelectedStaff(staff);
 
-      // normalize possible shapes for date_joined
-      let dateJoined = "";
-      if (staff?.date_joined) {
-        dateJoined = formatDateToYYYYMMDD(staff.date_joined);
-      }
-
-      // normalize possible shapes for dob
-      let dob = "";
-      if (staff?.dob) {
-        dob = formatDateToYYYYMMDD(staff.dob);
-      }
+      // Format dates for input fields
+      const dateJoined = formatDateForInput(staff.date_joined);
+      const dob = formatDateForInput(staff.dob);
 
       setFormData({
         first_name: staff.first_name || "",
@@ -253,7 +240,6 @@ export function Staff() {
         qualification: staff.qualification || "",
         experience: staff.experience || "",
         date_joined: dateJoined,
-        // role_title: staff.role_title || "", // इस फ़ील्ड को वापस जोड़ें
         is_active: staff.emp_active === 1 ? true : false,
       });
       setIsModalOpen(true);
@@ -315,7 +301,6 @@ export function Staff() {
               accessor: (r) =>
                 `${r.first_name || ""} ${r.last_name || ""}`,
             },
-            // { header: "Role", accessor: "role_title" }, // role_title का उपयोग role के बजाय करें
             { header: "Department", accessor: (r) => r.department_name || "—" },
             { header: "Phone", accessor: (r) => r.phone || "—" },
             { header: "Email", accessor: (r) => r.email || "—" },
@@ -382,12 +367,10 @@ export function Staff() {
                 "email",
                 "password",
                 "phone",
-                "dob",
                 "address",
                 "specialization",
                 "qualification",
                 "experience",
-                "date_joined",
               ].map((field, idx) => (
                 <div key={idx}>
                   <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
@@ -397,8 +380,6 @@ export function Staff() {
                     type={
                       field === "password"
                         ? "password"
-                        : field.includes("date")
-                        ? "date"
                         : "text"
                     }
                     value={formData[field] || ""}
@@ -412,6 +393,36 @@ export function Staff() {
                 </div>
               ))}
 
+              {/* Date of Birth */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.dob || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dob: e.target.value })
+                  }
+                  className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Date Joined */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date Joined
+                </label>
+                <input
+                  type="date"
+                  value={formData.date_joined || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date_joined: e.target.value })
+                  }
+                  className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
               {/* Role */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -420,14 +431,9 @@ export function Staff() {
                 <select
                   value={formData.role_id}
                   onChange={(e) => {
-                    const roleId = e.target.value;
-                    const selectedRole = roles.find(r => r.id === parseInt(roleId));
-                    // const roleTitle = selectedRole ? (selectedRole.name || selectedRole.title || selectedRole.role) : "";
-                    
                     setFormData({ 
                       ...formData, 
-                      role_id: roleId,
-                      // role_title: roleTitle // एक साथ role_title अपडेट करें
+                      role_id: e.target.value
                     });
                   }}
                   className="w-full border rounded-lg p-2"
@@ -440,7 +446,6 @@ export function Staff() {
                         </option>
                       ))
                     : (
-                      /* Fallback: keep previous string options but user will need to map to role_id on server */
                       <>
                         <option value="1">Admin</option>
                         <option value="2">Doctor</option>
