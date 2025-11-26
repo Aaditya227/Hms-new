@@ -1,273 +1,212 @@
-
-
 // update
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import base_url from "../utils/baseurl";
-import {
-  Calendar,
-  Plus,
-  Clock,
-  User,
-  CheckCircle,
-  Eye,
-  Edit2,
-  Trash2,
-} from "../lib/icons";
+import { Calendar, Search, Eye } from "../lib/icons";
 import { Button } from "../components/common/Button";
 import { DataTable } from "../components/common/DataTable";
 import { Modal } from "../components/common/Modal";
-import { AppointmentBookingForm } from "../components/forms/AppointmentBookingForm";
 
 export default function DoctorsAppointments() {
   const [appointments, setAppointments] = useState([]);
-  const [patients, setPatients] = useState([]);
-  const [doctors, setDoctors] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("ALL");
-  const [editAppointment, setEditAppointment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-
-  // Fetch all data
-  const fetchAllData = async () => {
-    try {
-      const [appRes, patRes, docRes, deptRes] = await Promise.all([
-        axios.get(`${base_url}/appointments`),
-        axios.get(`${base_url}/patients`),
-        axios.get(`${base_url}/doctors`),
-        axios.get(`${base_url}/departments`),
-      ]);
-
-      setAppointments(appRes.data || []);
-      setPatients(patRes.data || []);
-      setDoctors(docRes.data || []);
-      setDepartments(deptRes.data || []);
-
-    } catch (error) {
-      console.error("❌ Error fetching data:", error);
-    }
-  };
+  const [filterStatus, setFilterStatus] = useState("ALL");
 
   useEffect(() => {
-    fetchAllData();
+    fetchAppointments();
   }, []);
 
-  // Status colors
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      
+      // ✅ Get doctor_id from localStorage
+      const userJSON = localStorage.getItem("user");
+      if (!userJSON) {
+        console.error("User not found in localStorage");
+        return;
+      }
+      const user = JSON.parse(userJSON);
+      const doctorId = user.id;
+
+      // ✅ Fetch doctor-specific appointments
+      const res = await axios.get(`${base_url}/doctors/appointments/${doctorId}`);
+      const data = res.data.data || []; // API returns { success, count, data[] }
+      setAppointments(data);
+    } catch (error) {
+      console.error("❌ Error fetching appointments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
-    switch (status) {
-      case "SCHEDULED":
-      case "CONFIRMED":
-        return "bg-blue-100 text-blue-700";
-      case "CHECKED_IN":
-        return "bg-yellow-100 text-yellow-700";
-      case "IN_CONSULTATION":
-        return "bg-purple-100 text-purple-700";
-      case "COMPLETED":
-        return "bg-green-100 text-green-700";
-      case "CANCELLED":
-      case "NO_SHOW":
-        return "bg-red-100 text-red-700";
-      case "RESCHEDULED":
-        return "bg-orange-100 text-orange-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
+    const s = status?.toLowerCase();
+    if (s === "confirmed") return "bg-green-100 text-green-700";
+    if (s === "scheduled") return "bg-blue-100 text-blue-700";
+    if (s === "cancelled" || s === "no_show") return "bg-red-100 text-red-700";
+    return "bg-gray-100 text-gray-700";
   };
 
-  // Create appointment
-  const handleBookingSuccess = async (formData) => {
-    try {
-      const res = await axios.post(`${base_url}/appointments`, formData);
-      setAppointments((prev) => [...prev, res.data.data]);
-      setIsModalOpen(false);
-      alert("✅ Appointment booked successfully!");
-      fetchAllData();
-    } catch (error) {
-      console.error("❌ Error creating appointment:", error.response?.data || error);
-      alert("❌ Failed to create appointment.");
-    }
+  const formatDateTime = (isoString) => {
+    if (!isoString) return "-";
+    const date = new Date(isoString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  // Edit
-  const handleEditSuccess = async (updatedData) => {
-    try {
-      const res = await axios.put(
-        `${base_url}/appointments/${updatedData.id}`,
-        updatedData
-      );
+  const filteredAppointments = appointments.filter((appt) => {
+    const matchesSearch =
+      appt.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      appt.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      appt.appointment_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      appt.phone?.includes(searchQuery);
+    
+    const matchesStatus = filterStatus === "ALL" || appt.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-      setAppointments((prev) =>
-        prev.map((a) => (a.id === updatedData.id ? res.data.data : a))
-      );
-
-      setIsEditModalOpen(false);
-      setEditAppointment(null);
-      alert("✅ Appointment updated!");
-      fetchAllData();
-
-    } catch (error) {
-      console.error("❌ Error updating appointment:", error.response?.data || error);
-      alert("❌ Failed to update appointment.");
-    }
-  };
-
-  // Cancel
-  const handleCancel = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-
-    try {
-      await axios.delete(`${base_url}/appointments/${id}`);
-      setAppointments((prev) => prev.filter((a) => a.id !== id));
-      alert("🗑️ Appointment cancelled!");
-    } catch (error) {
-      console.error("❌ Error cancelling:", error);
-      alert("❌ Failed to cancel.");
-    }
-  };
-
-  // Helpers
-  const getPatientName = (id) => {
-    const p = patients.find((x) => x.id === id);
-    return p ? `${p.user?.firstName} ${p.user?.lastName}` : "-";
-  };
-
-  const getDoctorName = (id) => {
-    const d = doctors.find((x) => x.id === id);
-    return d ? d.fullName : "-";
-  };
-
-  // FIXED: Correct department name
-  const getDepartmentName = (doctorId) => {
-    const doc = doctors.find((x) => x.id === doctorId);
-    return doc?.department || "-";
-  };
+  if (loading)
+    return <p className="text-center py-8 text-gray-500">Loading appointments...</p>;
 
   return (
     <div className="space-y-6">
-      
-      {/* Header */}
+      {/* Header — NO "Book Appointment" button */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-10">
         <div>
-          <h1 className="text-3xl font-bold">Appointments</h1>
-          <p className="text-gray-600">Manage and schedule patient appointments</p>
+          <h1 className="text-3xl font-bold">My Appointments</h1>
+          <p className="text-gray-600">View your scheduled patient appointments</p>
         </div>
-
-        <Button onClick={() => setIsModalOpen(true)} icon={Plus}>
-          Book Appointment
-        </Button>
+        {/* ✅ Removed booking button for doctors */}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {[
-          "ALL",
-          "SCHEDULED",
-          "CONFIRMED",
-          "RESCHEDULED",
-          "COMPLETED",
-          "CANCELLED",
-        ].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium ${
-              filterStatus === status
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {status.replace("_", " ")}
-          </button>
-        ))}
+      {/* Filters & Search */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search by name, code, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {["ALL", "confirmed", "scheduled", "cancelled"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium capitalize ${
+                filterStatus === status
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {status === "ALL" ? "All" : status}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <DataTable
-          data={appointments.filter(
-            (a) => filterStatus === "ALL" || a.status === filterStatus
-          )}
-          columns={[
-            { header: "Appt No", accessor: "appointmentNumber" },
-            { header: "Patient", accessor: (row) => getPatientName(row.patientId) },
-            { header: "Doctor", accessor: (row) => getDoctorName(row.doctorId) },
-            { header: "Department", accessor: (row) => getDepartmentName(row.doctorId) },
-            { header: "Scheduled At", accessor: "scheduledAt" },
-            {
-              header: "Status",
-              accessor: (row) => (
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
-                  {row.status.replace("_", " ")}
-                </span>
-              ),
-            },
-            {
-              header: "Actions",
-              accessor: (row) => (
-                <div className="flex gap-3 justify-center">
-                  <button onClick={() => setSelectedAppointment(row)} className="text-indigo-600">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => { setEditAppointment(row); setIsEditModalOpen(true); }} className="text-green-600">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  {row.status !== "COMPLETED" &&
-                    row.status !== "CANCELLED" && (
-                      <button onClick={() => handleCancel(row.id)} className="text-red-600">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                </div>
-              ),
-            },
-          ]}
-        />
+      <div className="bg-white/60 backdrop-blur-md rounded-xl shadow-soft p-6 border border-gray-100">
+        {filteredAppointments.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No appointments found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable
+              data={filteredAppointments}
+              columns={[
+                { 
+                  header: "Appointment Code", 
+                  accessor: "appointment_code" 
+                },
+                { 
+                  header: "Patient", 
+                  accessor: (row) => `${row.first_name || ""} ${row.last_name || ""}` 
+                },
+                { 
+                  header: "Phone", 
+                  accessor: "phone" 
+                },
+                { 
+                  header: "Scheduled At", 
+                  accessor: (row) => formatDateTime(row.scheduled_at) 
+                },
+                { 
+                  header: "Duration (min)", 
+                  accessor: "duration_minutes" 
+                },
+                {
+                  header: "Status",
+                  accessor: (row) => (
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
+                      {row.status?.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase()) || "—"}
+                    </span>
+                  ),
+                },
+                {
+                  header: "Actions",
+                  accessor: (row) => (
+                    <button
+                      onClick={() => setSelectedAppointment(row)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Modal (Create) */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Book Appointment">
-        <AppointmentBookingForm onSuccess={handleBookingSuccess} />
-      </Modal>
-
-      {/* Modal (Edit) */}
-      {editAppointment && (
-        <Modal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          title="Edit Appointment"
-        >
-          <AppointmentBookingForm
-            onSuccess={handleEditSuccess}
-            initialData={editAppointment}
-            isEdit
-          />
-        </Modal>
-      )}
-
-      {/* Modal (View Details) */}
-      {selectedAppointment && (
-        <Modal
-          isOpen={!!selectedAppointment}
-          onClose={() => setSelectedAppointment(null)}
-          title="Appointment Details"
-        >
-          <div className="space-y-3 text-sm">
-            <p><strong>ID:</strong> {selectedAppointment.id}</p>
-            <p><strong>Appointment No:</strong> {selectedAppointment.appointmentNumber}</p>
-            <p><strong>Patient:</strong> {getPatientName(selectedAppointment.patientId)}</p>
-            <p><strong>Doctor:</strong> {getDoctorName(selectedAppointment.doctorId)}</p>
-            <p><strong>Department:</strong> {getDepartmentName(selectedAppointment.doctorId)}</p>
-            <p><strong>Duration (mins):</strong> {selectedAppointment.durationMins}</p>
-            <p><strong>Scheduled At:</strong> {selectedAppointment.scheduledAt}</p>
+      {/* View Details Modal */}
+      <Modal
+        isOpen={!!selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+        title="Appointment Details"
+      >
+        {selectedAppointment && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">
+            {/* Appointment Info */}
+            <p><strong>Appointment Code:</strong> {selectedAppointment.appointment_code}</p>
             <p><strong>Status:</strong> {selectedAppointment.status}</p>
-            <p><strong>Reason:</strong> {selectedAppointment.reason}</p>
-            <p><strong>Notes:</strong> {selectedAppointment.notes}</p>
+            <p><strong>Scheduled At:</strong> {formatDateTime(selectedAppointment.scheduled_at)}</p>
+            <p><strong>Duration:</strong> {selectedAppointment.duration_minutes} minutes</p>
+            <p><strong>Reason:</strong> {selectedAppointment.reason || "—"}</p>
+            <p><strong>Notes:</strong> {selectedAppointment.notes || "—"}</p>
+
+            {/* Patient Info */}
+            <p><strong>Patient Name:</strong> {selectedAppointment.first_name} {selectedAppointment.last_name}</p>
+            <p><strong>Phone:</strong> {selectedAppointment.phone}</p>
+            <p><strong>Email:</strong> {selectedAppointment.email || "—"}</p>
+            <p><strong>DOB:</strong> {selectedAppointment.dob?.split("T")[0] || "—"}</p>
+            <p><strong>Age:</strong> {selectedAppointment.age || "—"}</p>
+            <p><strong>Gender:</strong> {selectedAppointment.gender}</p>
+            <p><strong>Address:</strong> {selectedAppointment.address || "—"}</p>
+            <p><strong>Blood Group:</strong> {selectedAppointment.blood_group}</p>
+            <p><strong>Allergies:</strong> {selectedAppointment.allergies}</p>
+            <p><strong>Medical History:</strong> {selectedAppointment.medical_history}</p>
+            <p><strong>Current Treatment:</strong> {selectedAppointment.current_treatment}</p>
+            <p><strong>Insurance:</strong> {selectedAppointment.insurance_provider}</p>
+            <p><strong>Policy No:</strong> {selectedAppointment.insurance_number}</p>
+            <p><strong>Emergency Contact:</strong> {selectedAppointment.emergency_contact_name}</p>
+            <p><strong>Emergency Phone:</strong> {selectedAppointment.emergency_contact_phone}</p>
           </div>
-        </Modal>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }
