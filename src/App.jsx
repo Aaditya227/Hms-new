@@ -180,7 +180,7 @@ function App() {
                 // patient routes//
 
                 {path: "patient-appointment", Component: PatientsAppointments },
-                {patch: "patient-prescription", Component: PatientPrescription},
+                {patch: "patient-prescriptions", Component: PatientPrescription},
                 {path: "patient-doctor", Component: PatientDoctor },
                 {path: "patient-lab-report", Component: PatientLabReport},
                 {path: "patient-radiology", Component: PatientRadiologyReport},
