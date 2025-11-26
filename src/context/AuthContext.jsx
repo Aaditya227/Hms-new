@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import base_url from "../utils/baseurl";
@@ -7,41 +5,62 @@ import base_url from "../utils/baseurl";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-  const [loading, setLoading] = useState(false);
+  const [authData, setAuthData] = useState(null); // Will hold { user, employee, employee_id }
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Axios interceptor to attach token automatically
+  // 🔄 Restore from localStorage on app start
   useEffect(() => {
-    axios.interceptors.request.use(
+    const token = localStorage.getItem("token");
+    const savedAuthData = localStorage.getItem("authData");
+
+    if (token && savedAuthData) {
+      try {
+        const parsed = JSON.parse(savedAuthData);
+        setAuthData(parsed);
+      } catch (e) {
+        console.warn("Failed to parse authData from localStorage");
+        localStorage.removeItem("token");
+        localStorage.removeItem("authData");
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  // 🛡️ Axios interceptor (with cleanup)
+  useEffect(() => {
+    const interceptor = axios.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem("token");
-        if (token) config.headers.Authorization = `Bearer ${token}`;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
       },
       (error) => Promise.reject(error)
     );
+
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
   }, []);
 
-  // ✅ Login function (calls backend /api/auth/login)
+  // 🔑 Login function — saves FULL response data
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const res = await axios.post(`${base_url}/auth/login`, {
-        email,
-        password,
-      });
+      const res = await axios.post(`${base_url}/auth/login`, { email, password });
 
-      const { token, user } = res.data;
+      const { token, user, employee, employee_id } = res.data;
+
+      // ✅ Save full auth context
+      const fullAuthData = { user, employee, employee_id };
 
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("authData", JSON.stringify(fullAuthData));
 
-      setUser(user);
+      setAuthData(fullAuthData);
       setLoading(false);
-      return { success: true, user };
+      return { success: true, ...fullAuthData };
     } catch (error) {
       console.error("❌ Login failed:", error.response?.data || error);
       setLoading(false);
@@ -52,19 +71,38 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ✅ Logout function
+  // 🚪 Logout
   const logout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
+    localStorage.removeItem("authData");
+    setAuthData(null);
   };
 
+  // Expose user, employee, etc. directly for convenience
+  const { user, employee, employee_id } = authData || {};
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        employee,
+        employee_id,
+        loading,
+        isLoggedIn: !!authData,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-// ✅ Custom hook
-export const useAuth = () => useContext(AuthContext);
+// 💡 Custom hook
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used inside an AuthProvider");
+  }
+  return context;
+};

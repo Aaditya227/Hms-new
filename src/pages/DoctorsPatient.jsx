@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Users, Search, Eye, Trash2 } from "../lib/icons";
+import { Users, Search, Eye } from "../lib/icons"; // Trash2 not used — removed
 import { Button } from "../components/common/Button";
 import { DataTable } from "../components/common/DataTable";
 import { Modal } from "../components/common/Modal";
 import base_url from "../utils/baseurl";
+import { useAuth } from "../context/AuthContext"; // ✅ Import your AuthContext
 
-// Normalize API → UI (your API has flat fields)
+// Normalize API → UI
 const normalizePatientKeys = (p) => {
   return {
     id: p.id,
@@ -33,6 +34,8 @@ const normalizePatientKeys = (p) => {
 };
 
 export function DoctorsPatient() {
+  const { employee_id, loading: authLoading } = useAuth(); // ✅ Get employee_id from context
+
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,24 +43,17 @@ export function DoctorsPatient() {
   const [selectedPatient, setSelectedPatient] = useState(null);
 
   useEffect(() => {
-    fetchPatientsForDoctor();
-  }, []);
+    if (employee_id) {
+      fetchPatientsForDoctor();
+    }
+  }, [employee_id]);
 
   const fetchPatientsForDoctor = async () => {
     try {
       setLoading(true);
-      
-      // ✅ Get doctor_id from localStorage
-      const userJSON = localStorage.getItem("user");
-      if (!userJSON) {
-        console.error("User not found in localStorage");
-        return;
-      }
-      const user = JSON.parse(userJSON);
-      const doctorId = user.id;
 
-      // ✅ Call doctor-specific endpoint
-      const res = await axios.get(`${base_url}/doctors/patients/${doctorId}`);
+      // ✅ Now using employee_id from AuthContext
+      const res = await axios.get(`${base_url}/doctors/patients/${employee_id}`);
       const data = res.data.data || []; // API returns { success, count, data[] }
       setPatients(data.map(normalizePatientKeys));
     } catch (err) {
@@ -85,18 +81,19 @@ export function DoctorsPatient() {
       p.id?.toString().includes(searchQuery)
   );
 
-  if (loading)
+  // Show loading while auth or data loads
+  if (authLoading || loading) {
     return <p className="text-center py-8 text-gray-500">Loading patients...</p>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header — NO ADD BUTTON */}
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-display font-bold text-gray-900">My Patients</h1>
           <p className="text-gray-600 mt-1">View your assigned patient records</p>
         </div>
-        {/* ✅ Removed "Register New Patient" button */}
       </div>
 
       {/* Stats */}
@@ -182,7 +179,6 @@ export function DoctorsPatient() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {/* ✅ Removed Edit & Delete — doctors can only view */}
                     </div>
                   ),
                 },
@@ -212,8 +208,8 @@ export function DoctorsPatient() {
             <p><strong>Email:</strong> {selectedPatient.email || "—"}</p>
             <p><strong>Address:</strong> {selectedPatient.address || "—"}</p>
             <p><strong>Blood Group:</strong> {selectedPatient.bloodGroup}</p>
-            <p><strong>Height:</strong> {selectedPatient.height} cm</p>
-            <p><strong>Weight:</strong> {selectedPatient.weight} kg</p>
+            <p><strong>Height:</strong> {selectedPatient.height ? `${selectedPatient.height} cm` : "—"}</p>
+            <p><strong>Weight:</strong> {selectedPatient.weight ? `${selectedPatient.weight} kg` : "—"}</p>
             <p><strong>Current Treatment:</strong> {selectedPatient.currentTreatment || "—"}</p>
             <p><strong>Allergies:</strong> {selectedPatient.allergies || "—"}</p>
             <p><strong>Medical History:</strong> {selectedPatient.medicalHistory || "—"}</p>

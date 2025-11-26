@@ -6,33 +6,30 @@ import { Calendar, Search, Eye } from "../lib/icons";
 import { Button } from "../components/common/Button";
 import { DataTable } from "../components/common/DataTable";
 import { Modal } from "../components/common/Modal";
+import { useAuth } from "../context/AuthContext"; // ✅ Import your AuthContext
 
 export default function DoctorsAppointments() {
+  const { employee_id, loading: authLoading } = useAuth(); // ✅ Get employee_id directly
+
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [filterStatus, setFilterStatus] = useState("ALL");
 
+  // Fetch appointments once employee_id is available
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    if (employee_id) {
+      fetchAppointments();
+    }
+  }, [employee_id]);
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      
-      // ✅ Get doctor_id from localStorage
-      const userJSON = localStorage.getItem("user");
-      if (!userJSON) {
-        console.error("User not found in localStorage");
-        return;
-      }
-      const user = JSON.parse(userJSON);
-      const doctorId = user.id;
 
-      // ✅ Fetch doctor-specific appointments
-      const res = await axios.get(`${base_url}/doctors/appointments/${doctorId}`);
+      // ✅ Now using employee_id from AuthContext (not localStorage parsing!)
+      const res = await axios.get(`${base_url}/doctors/appointments/${employee_id}`);
       const data = res.data.data || []; // API returns { success, count, data[] }
       setAppointments(data);
     } catch (error) {
@@ -73,18 +70,19 @@ export default function DoctorsAppointments() {
     return matchesSearch && matchesStatus;
   });
 
-  if (loading)
+  // Show loading while auth or data loads
+  if (authLoading || loading) {
     return <p className="text-center py-8 text-gray-500">Loading appointments...</p>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header — NO "Book Appointment" button */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-bold">My Appointments</h1>
           <p className="text-gray-600">View your scheduled patient appointments</p>
         </div>
-        {/* ✅ Removed booking button for doctors */}
       </div>
 
       {/* Filters & Search */}
@@ -180,7 +178,6 @@ export default function DoctorsAppointments() {
       >
         {selectedAppointment && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">
-            {/* Appointment Info */}
             <p><strong>Appointment Code:</strong> {selectedAppointment.appointment_code}</p>
             <p><strong>Status:</strong> {selectedAppointment.status}</p>
             <p><strong>Scheduled At:</strong> {formatDateTime(selectedAppointment.scheduled_at)}</p>
@@ -188,7 +185,6 @@ export default function DoctorsAppointments() {
             <p><strong>Reason:</strong> {selectedAppointment.reason || "—"}</p>
             <p><strong>Notes:</strong> {selectedAppointment.notes || "—"}</p>
 
-            {/* Patient Info */}
             <p><strong>Patient Name:</strong> {selectedAppointment.first_name} {selectedAppointment.last_name}</p>
             <p><strong>Phone:</strong> {selectedAppointment.phone}</p>
             <p><strong>Email:</strong> {selectedAppointment.email || "—"}</p>
