@@ -1,3 +1,4 @@
+// src/pages/Laboratory.jsx
 import React, { useState, useEffect } from "react";
 import { Search, Plus, Edit2, Trash2 } from "../lib/icons";
 import { Button } from "../components/common/Button";
@@ -10,16 +11,19 @@ export function Laboratory() {
   const [labTests, setLabTests] = useState([]);
   const [labTestOptions, setLabTestOptions] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [doctorPatients, setDoctorPatients] = useState([]); // Only used in form
+  const [doctorPatients, setDoctorPatients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     patientId: "",
     testId: "",
     doctorId: "",
+    status: "Pending", // ✅ Add status to form
   });
   const [editId, setEditId] = useState(null);
 
-  const API_URL = "/labs/lab-requests";
+  // ✅ Separate API endpoints
+  const LIST_AND_CREATE_API = "/labs/lab-requests"; // GET (list), POST (create)
+  const DETAIL_API = "/labs/lab-tests";              // PUT, DELETE → use `/labs/lab-tests/:id`
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -33,7 +37,7 @@ export function Laboratory() {
   // === FETCH DATA ===
   const fetchLabOrders = async () => {
     try {
-      const res = await api.get(API_URL);
+      const res = await api.get(LIST_AND_CREATE_API);
       setLabTests(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Error fetching lab orders:", error);
@@ -95,16 +99,20 @@ export function Laboratory() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // ✅ Create payload with correct field names
       const payload = {
         patient_id: Number(formData.patientId),
         test_id: Number(formData.testId),
-        requested_by: Number(formData.doctorId), // ✅ employee_id
+        requested_by: Number(formData.doctorId),
+        status: formData.status, // ✅ Include status
       };
 
       if (editId) {
-        await api.put(`${API_URL}/${editId}`, payload);
+        // ✅ Use DETAIL_API for update
+        await api.put(`${DETAIL_API}/${editId}`, payload);
       } else {
-        await api.post(API_URL, payload);
+        // ✅ Use LIST_AND_CREATE_API for create
+        await api.post(LIST_AND_CREATE_API, payload);
       }
 
       await fetchLabOrders();
@@ -118,7 +126,12 @@ export function Laboratory() {
 
   const resetForm = () => {
     setEditId(null);
-    setFormData({ patientId: "", testId: "", doctorId: "" });
+    setFormData({
+      patientId: "",
+      testId: "",
+      doctorId: "",
+      status: "Pending",
+    });
     setDoctorPatients([]);
   };
 
@@ -128,6 +141,7 @@ export function Laboratory() {
       patientId: order.patient_id,
       testId: order.test_id,
       doctorId: order.requested_by,
+      status: order.status || "Pending", // ✅ Load current status
     });
     setIsModalOpen(true);
     fetchPatientsByDoctor(order.requested_by);
@@ -136,14 +150,15 @@ export function Laboratory() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this lab order?")) return;
     try {
-      await api.delete(`${API_URL}/${id}`);
+      // ✅ Use DETAIL_API for delete
+      await api.delete(`${DETAIL_API}/${id}`);
       await fetchLabOrders();
     } catch (error) {
       console.error("Error deleting lab order:", error);
     }
   };
 
-  // === DISPLAY HELPERS (for TABLE only) ===
+  // === DISPLAY HELPERS ===
   const getTestName = (testId) => {
     const test = labTestOptions.find(t => t.id == testId);
     return test ? test.name : `Test #${testId}`;
@@ -301,6 +316,20 @@ export function Laboratory() {
               </option>
             ))}
           </select>
+
+          {/* Status (only show in edit mode or optionally always) */}
+          {editId && (
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleFormChange}
+              className="w-full border rounded-lg p-2"
+            >
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          )}
 
           <Button type="submit" variant="primary" className="w-full">
             {editId ? "Update" : "Save"}

@@ -1,14 +1,47 @@
+// update 2 – UI-Only (No API)
 
-// update 2
-
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
-import base_url from "../utils/baseurl";
+
+// Mock data for UI preview
+const mockInvoices = [
+  {
+    id: 1,
+    invoiceNumber: "INV-001",
+    invoiceType: "CONSULTATION",
+    patient: { user: { firstName: "Rahul", lastName: "Sharma" } },
+    totalAmount: 1200,
+    paidAmount: 1200,
+    paymentStatus: "PAID",
+  },
+  {
+    id: 2,
+    invoiceNumber: "INV-002",
+    invoiceType: "LAB",
+    patient: { user: { firstName: "Priya", lastName: "Mehta" } },
+    totalAmount: 2500,
+    paidAmount: 1000,
+    paymentStatus: "PARTIAL",
+  },
+  {
+    id: 3,
+    invoiceNumber: "INV-003",
+    invoiceType: "PHARMACY",
+    patient: { user: { firstName: "Amit", lastName: "Kumar" } },
+    totalAmount: 850,
+    paidAmount: 0,
+    paymentStatus: "PENDING",
+  },
+];
+
+const mockPatients = [
+  { id: 1, user: { firstName: "Rahul", lastName: "Sharma" } },
+  { id: 2, user: { firstName: "Priya", lastName: "Mehta" } },
+  { id: 3, user: { firstName: "Amit", lastName: "Kumar" } },
+  { id: 4, user: { firstName: "Sneha", lastName: "Patel" } },
+];
 
 export default function Billing() {
-  const [invoices, setInvoices] = useState([]);
-  const [patients, setPatients] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editInvoice, setEditInvoice] = useState(null);
 
@@ -24,65 +57,17 @@ export default function Billing() {
     dueAt: "",
   });
 
-  const API_BASE = `${base_url}/invoices`;
-
-  useEffect(() => {
-    fetchInvoices();
-    fetchPatients();
-  }, []);
-
-  const fetchInvoices = async () => {
-    try {
-      const res = await axios.get(API_BASE);
-      setInvoices(res.data);
-    } catch (error) {
-      console.error("❌ Error fetching invoices:", error);
-    }
-  };
-
-  const fetchPatients = async () => {
-    try {
-      const res = await axios.get(`${base_url}/patients`);
-      setPatients(res.data);
-    } catch (error) {
-      console.error("❌ Error fetching patients:", error);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const payload = {
-        invoiceNumber: formData.invoiceNumber,
-        invoiceType: formData.invoiceType,
-        patientId: Number(formData.patientId),
-        totalAmount: parseFloat(formData.totalAmount) || 0,
-        paidAmount: parseFloat(formData.paidAmount) || 0,
-        paymentMode: formData.paymentMode,
-        paymentStatus: formData.paymentStatus,
-        issuedAt: formData.issuedAt || new Date(),
-        dueAt: formData.dueAt || null,
-      };
-
-      if (editInvoice) {
-        await axios.put(`${API_BASE}/${editInvoice.id}`, payload);
-      } else {
-        await axios.post(API_BASE, payload);
-      }
-
-      alert("✅ Invoice saved successfully!");
-      setShowForm(false);
-      resetForm();
-      fetchInvoices();
-    } catch (error) {
-      console.error("❌ Error saving invoice:", error);
-      alert("Failed to save invoice — check backend logs.");
-    }
+    // No real submission — just close form for demo
+    alert("✅ UI Demo: Form submitted (no API call)");
+    setShowForm(false);
+    resetForm();
   };
 
   const resetForm = () => {
@@ -111,15 +96,9 @@ export default function Billing() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this invoice?")) {
-      try {
-        await axios.delete(`${API_BASE}/${id}`);
-        fetchInvoices();
-      } catch (error) {
-        console.error("❌ Error deleting invoice:", error);
-      }
-    }
+  const handleDelete = (id) => {
+    // Just for UI feedback
+    alert("🗑️ UI Demo: Delete clicked (no API call)");
   };
 
   return (
@@ -152,24 +131,50 @@ export default function Billing() {
             </tr>
           </thead>
           <tbody>
-            {invoices.length > 0 ? (
-              invoices.map((inv) => (
+            {mockInvoices.length > 0 ? (
+              mockInvoices.map((inv) => (
                 <tr key={inv.id} className="border-b hover:bg-purple-50">
                   <td className="p-3">{inv.invoiceNumber}</td>
                   <td className="p-3">{inv.invoiceType}</td>
-                  <td className="p-3">{inv.patient?.user ? `${inv.patient.user.firstName} ${inv.patient.user.lastName}` : "N/A"}</td>
+                  <td className="p-3">
+                    {inv.patient?.user
+                      ? `${inv.patient.user.firstName} ${inv.patient.user.lastName}`
+                      : "N/A"}
+                  </td>
                   <td className="p-3">₹{inv.totalAmount}</td>
                   <td className="p-3">₹{inv.paidAmount}</td>
-                  <td className={`p-3 font-medium ${inv.paymentStatus === "PAID" ? "text-green-600" : "text-orange-600"}`}>{inv.paymentStatus}</td>
+                  <td
+                    className={`p-3 font-medium ${
+                      inv.paymentStatus === "PAID"
+                        ? "text-green-600"
+                        : inv.paymentStatus === "PARTIAL"
+                        ? "text-blue-600"
+                        : "text-orange-600"
+                    }`}
+                  >
+                    {inv.paymentStatus}
+                  </td>
                   <td className="p-3 flex justify-end gap-3">
-                    <button onClick={() => handleEdit(inv)} className="text-blue-600 hover:text-blue-800"><Edit2 size={18} /></button>
-                    <button onClick={() => handleDelete(inv.id)} className="text-red-600 hover:text-red-800"><Trash2 size={18} /></button>
+                    <button
+                      onClick={() => handleEdit(inv)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(inv.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="p-4 text-center text-gray-500">No invoices found.</td>
+                <td colSpan="7" className="p-4 text-center text-gray-500">
+                  No invoices found.
+                </td>
               </tr>
             )}
           </tbody>
@@ -180,12 +185,27 @@ export default function Billing() {
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-[450px] max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">{editInvoice ? "Edit Invoice" : "Create New Invoice"}</h3>
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+              {editInvoice ? "Edit Invoice" : "Create New Invoice"}
+            </h3>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              <input name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} placeholder="Invoice Number" className="w-full border rounded-lg p-2" required />
+              <input
+                name="invoiceNumber"
+                value={formData.invoiceNumber}
+                onChange={handleChange}
+                placeholder="Invoice Number"
+                className="w-full border rounded-lg p-2"
+                required
+              />
 
-              <select name="invoiceType" value={formData.invoiceType} onChange={handleChange} className="w-full border rounded-lg p-2" required>
+              <select
+                name="invoiceType"
+                value={formData.invoiceType}
+                onChange={handleChange}
+                className="w-full border rounded-lg p-2"
+                required
+              >
                 <option value="">Select Invoice Type</option>
                 <option value="CONSULTATION">Consultation</option>
                 <option value="LAB">Lab</option>
@@ -196,17 +216,44 @@ export default function Billing() {
                 <option value="OTHER">Other</option>
               </select>
 
-              <select name="patientId" value={formData.patientId} onChange={handleChange} className="w-full border rounded-lg p-2" required>
+              <select
+                name="patientId"
+                value={formData.patientId}
+                onChange={handleChange}
+                className="w-full border rounded-lg p-2"
+                required
+              >
                 <option value="">Select Patient</option>
-                {patients.map((p) => (
-                  <option key={p.id} value={p.id}>{p.user?.firstName} {p.user?.lastName}</option>
+                {mockPatients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.user?.firstName} {p.user?.lastName}
+                  </option>
                 ))}
               </select>
 
-              <input name="totalAmount" value={formData.totalAmount} onChange={handleChange} placeholder="Total Amount" className="w-full border rounded-lg p-2" required />
-              <input name="paidAmount" value={formData.paidAmount} onChange={handleChange} placeholder="Paid Amount" className="w-full border rounded-lg p-2" />
+              <input
+                name="totalAmount"
+                value={formData.totalAmount}
+                onChange={handleChange}
+                placeholder="Total Amount"
+                className="w-full border rounded-lg p-2"
+                required
+              />
+              <input
+                name="paidAmount"
+                value={formData.paidAmount}
+                onChange={handleChange}
+                placeholder="Paid Amount"
+                className="w-full border rounded-lg p-2"
+              />
 
-              <select name="paymentMode" value={formData.paymentMode} onChange={handleChange} className="w-full border rounded-lg p-2" required>
+              <select
+                name="paymentMode"
+                value={formData.paymentMode}
+                onChange={handleChange}
+                className="w-full border rounded-lg p-2"
+                required
+              >
                 <option value="">Select Payment Mode</option>
                 <option value="CASH">Cash</option>
                 <option value="FIB">FIB</option>
@@ -217,7 +264,13 @@ export default function Billing() {
                 <option value="OTHER">Other</option>
               </select>
 
-              <select name="paymentStatus" value={formData.paymentStatus} onChange={handleChange} className="w-full border rounded-lg p-2" required>
+              <select
+                name="paymentStatus"
+                value={formData.paymentStatus}
+                onChange={handleChange}
+                className="w-full border rounded-lg p-2"
+                required
+              >
                 <option value="PENDING">Pending</option>
                 <option value="PAID">Paid</option>
                 <option value="PARTIAL">Partial</option>
@@ -226,8 +279,22 @@ export default function Billing() {
               </select>
 
               <div className="flex justify-end gap-3 mt-4">
-                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
-                <button type="submit" className="bg-[rgb(167,139,250)] px-4 py-2 text-white rounded-lg hover:bg-[rgb(147,119,230)]">{editInvoice ? "Update" : "Create"}</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[rgb(167,139,250)] px-4 py-2 text-white rounded-lg hover:bg-[rgb(147,119,230)]"
+                >
+                  {editInvoice ? "Update" : "Create"}
+                </button>
               </div>
             </form>
           </div>
