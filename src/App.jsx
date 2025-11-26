@@ -52,12 +52,18 @@ const staffAttendance = lazyImport(() => import("./pages/StaffAttendance"));
 const PatientsAppointments = lazyImport(() => import("./pages/PatientsAppointments"));
 const PatientPrescription = lazyImport(() => import("./pages/PatientPrescription"));
 const PatientDoctor = lazyImport(() => import("./pages/PatientDoctor"));
+const PatientLabReport = lazyImport(() => import("./pages/PatientLabReport"));
+const PatientRadiologyReport = lazyImport(() => import("./pages/PatientRadiologyReport"));
+const PatientPaymentHistory = lazyImport(() => import("./pages/PatientPaymentHistory"));
 //Nurse
 const NursePrescriptions = lazyImport(() => import("./pages/NursePrescriptions"));
 const NursePatient = lazyImport(() => import("./pages/NursePatient"));
 //Pharmacist
 const PharmacistPharmacy = lazyImport(() => import("./pages/PharmacistPharmacy"));
-
+//Lab Tech
+const LabTechLabTest = lazyImport(() => import("./pages/LabTechLabTest"));
+//Radiologist
+const RadiologistRadiologyTest = lazyImport(() => import("./pages/RadiologistRadiologyTest"));
 /* ------------------ Loader ------------------ */
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-hospital-purple/20 via-white to-teal-500/20 flex items-center justify-center">
@@ -169,12 +175,22 @@ function App() {
 
                 {path: "patientsappointment", Component: PatientsAppointments },
                 {patch: "patient-prescription", Component: PatientPrescription},
-                { path: "patient-doctor", Component: PatientDoctor },
+                {path: "patient-doctor", Component: PatientDoctor },
+                {path: "patient-lab-report", Component: PatientLabReport},
+                {path: "patient-radiology", Component: PatientRadiologyReport},
+                {path: "patient-payment-history", Component: PatientPaymentHistory},
 
                 //Phasrmacist routes//
 
                 { path: "pharmacist-pharmacy", Component: PharmacistPharmacy },
 
+                //Lab Tech routes//
+
+                {path: "labtech-labtest", Component: LabTechLabTest},
+
+                //Radiologist routes//
+                
+                {path: "radiologist-radiologytest", Component: RadiologistRadiologyTest},
 
                 { path: "appointments", Component: Appointments },
                 
