@@ -56,8 +56,15 @@ const navItems = [
   { label: "Appointment", path: "/dashboard/patients-appointments", icon: Calendar, roles: ["PATIENT"] },
   { label: "Prescriptions", path: "/dashboard/patient-prescriptions", icon: FileText, roles: ["PATIENT"] },
   { label: "Doctor", path: "/dashboard/patient-doctor", icon: Users, roles: ["PATIENT"] },
+  { label: "Lab Report", path: "/dashboard/patient-lab-report", icon: FlaskConical, roles: ["PATIENT"] },
+  { label: "Radiology Report", path: "/dashboard/patient-radiology", icon: Activity, roles: ["PATIENT"] },
+  { label: "Payment History", path: "/dashboard/patient-payment-history", icon: DollarSign, roles: ["PATIENT"] },
   // Pharmacist
   { label: "Pharmacist Pharmacy", path: "/dashboard/pharmacist-pharmacy", icon: Pill, roles: ["PHARMACIST"] },
+  // Lab Tech
+  { label: "Lab Test", path: "/dashboard/labtech-labtest", icon: FlaskConical, roles: ["LAB_TECH"] },
+  // Radiologist 
+  { label: "Radiology Test", path: "/dashboard/radiologist-radiologytest", icon: Activity, roles: ["RADIOLOGIST"] },
   // Common
   { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN"] },
   { label: "Department", path: "/dashboard/department", icon: Blocks, roles: ["ADMIN"] },
