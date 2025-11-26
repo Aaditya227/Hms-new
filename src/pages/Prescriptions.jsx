@@ -1,8 +1,4 @@
-
-
 // updated 2
-
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "../components/common/Button";
@@ -46,7 +42,7 @@ export default function Prescriptions() {
   const fetchDoctors = async () => {
     try {
       const res = await axios.get(`${API_BASE}/doctors`);
-      setDoctors(res.data);
+      setDoctors(res.data.doctors || []);
     } catch (error) {
       console.error("Error fetching doctors:", error);
     }
@@ -55,7 +51,7 @@ export default function Prescriptions() {
   const fetchPatients = async () => {
     try {
       const res = await axios.get(`${API_BASE}/patients`);
-      setPatients(res.data);
+      setPatients(res.data.data || []);
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
@@ -63,8 +59,9 @@ export default function Prescriptions() {
 
   const fetchMedicines = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/medicines`);
-      setMedicines(res.data);
+      // ✅ API returns array directly → res.data is correct
+      const res = await axios.get(`${API_BASE}/pharmacy`); // or /medicines — use your actual endpoint
+      setMedicines(res.data || []);
     } catch (error) {
       console.error("Error fetching medicines:", error);
     }
@@ -97,22 +94,27 @@ export default function Prescriptions() {
   const handleSave = async () => {
     try {
       setLoading(true);
+      
+      // Transform the form data to match API requirements
       const payload = {
-        ...formData,
-        doctorId: Number(formData.doctorId),
-        patientId: Number(formData.patientId),
+        patient_id: Number(formData.patientId),
+        doctor_id: Number(formData.doctorId),
+        notes: formData.notes,
         items: formData.items.map((i) => ({
-          ...i,
-          medicineId: Number(i.medicineId),
-          quantity: Number(i.quantity),
-          durationDays: Number(i.durationDays),
+          medication_id: Number(i.medicineId),
+          name: medicines.find(m => m.id === i.medicineId)?.brand_name || "",
+          dose: i.dosage,
+          days: Number(i.durationDays),
+          quantity: Number(i.quantity)
         })),
       };
 
       if (editingId) {
         await axios.put(`${API_BASE}/prescriptions/${editingId}`, payload);
       } else {
-        await axios.post(`${API_BASE}/prescriptions`, payload);
+        // POST request to create new prescription
+        const response = await axios.post(`${API_BASE}/prescriptions`, payload);
+        console.log("Prescription created successfully:", response.data);
       }
 
       await fetchAllPrescriptions();
@@ -159,20 +161,21 @@ export default function Prescriptions() {
   };
 
   const getDoctorName = (id) => {
-    const doc = doctors.find((d) => d.id === id);
-    return doc ? `${doc.fullName} (${doc.speciality})` : "N/A";
+    const doc = doctors.find((d) => d.employee_id === id);
+    return doc ? `${doc.first_name} ${doc.last_name} (${doc.specialization || "N/A"})` : "N/A";
   };
 
   const getPatientName = (id) => {
     const p = patients.find((pt) => pt.id === id);
-    return p ? `${p.user?.firstName} ${p.user?.lastName}` : "N/A";
+    return p ? `${p.first_name} ${p.last_name}` : "N/A";
   };
 
+  // ✅ FIXED: Use brand_name (not brandName)
   const getMedicineNames = (items) => {
     return items
       ?.map((i) => {
         const m = medicines.find((med) => med.id === i.medicineId);
-        return m ? `${m.brandName} (${i.dosage})` : "-";
+        return m ? `${m.brand_name} (${i.dosage})` : "-";
       })
       .join(", ");
   };
@@ -183,7 +186,6 @@ export default function Prescriptions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
         <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Prescriptions</h2>
-
         <Button onClick={() => { resetForm(); setShowForm(true); }} className="w-full sm:w-auto">
           + Add Prescription
         </Button>
@@ -208,12 +210,16 @@ export default function Prescriptions() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label>Patient</label>
-                <select name="patientId" value={formData.patientId} onChange={handleChange}
-                  className="w-full mt-1 p-2 border rounded-md">
+                <select
+                  name="patientId"
+                  value={formData.patientId}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-md"
+                >
                   <option value="">Select Patient</option>
                   {patients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.user?.firstName} {p.user?.lastName}
+                      {p.first_name} {p.last_name}
                     </option>
                   ))}
                 </select>
@@ -221,12 +227,16 @@ export default function Prescriptions() {
 
               <div>
                 <label>Doctor</label>
-                <select name="doctorId" value={formData.doctorId} onChange={handleChange}
-                  className="w-full mt-1 p-2 border rounded-md">
+                <select
+                  name="doctorId"
+                  value={formData.doctorId}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-md"
+                >
                   <option value="">Select Doctor</option>
                   {doctors.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.fullName} — {d.speciality}
+                    <option key={d.employee_id} value={d.employee_id}>
+                      {d.first_name} {d.last_name} — {d.specialization}
                     </option>
                   ))}
                 </select>
@@ -248,24 +258,27 @@ export default function Prescriptions() {
             {/* Medicine Items */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                {/* <h4 className="font-semibold">Medicines</h4> */}
                 <Button onClick={addItem} className="flex items-center gap-2 w-full sm:w-auto">
                   <Plus size={16} /> Add Medicine
                 </Button>
               </div>
 
               {formData.items.map((item, index) => (
-                <div key={index}
-                  className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-2 items-center sm:items-end">
-                  
+                <div
+                  key={index}
+                  className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-2 items-center sm:items-end"
+                >
                   <select
                     value={item.medicineId}
                     onChange={(e) => handleItemChange(index, "medicineId", e.target.value)}
                     className="p-2 border rounded-md"
                   >
                     <option value="">Select Medicine</option>
+                    {/* ✅ FIXED: Use brand_name and strength */}
                     {medicines.map((m) => (
-                      <option key={m.id} value={m.id}>{m.brandName} — {m.strength}</option>
+                      <option key={m.id} value={m.id}>
+                        {m.brand_name} — {m.strength}
+                      </option>
                     ))}
                   </select>
 
@@ -335,15 +348,10 @@ export default function Prescriptions() {
                   <td className="px-4 py-2">{getDoctorName(p.doctorId)}</td>
                   <td className="px-4 py-2">{getMedicineNames(p.items)}</td>
                   <td className="px-4 py-2">{p.notes || "-"}</td>
-
                   <td className="px-4 py-2 flex gap-3">
-                    <button
-                      onClick={() => handleEdit(p)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
+                    <button onClick={() => handleEdit(p)} className="text-blue-600 hover:text-blue-800">
                       <Edit2 size={16} />
                     </button>
-
                     <button
                       onClick={() => handleDelete(p.id)}
                       className="text-red-600 hover:text-red-800"
@@ -366,4 +374,3 @@ export default function Prescriptions() {
     </div>
   );
 }
-

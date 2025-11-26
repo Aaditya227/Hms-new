@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+
+// update
+
+=======
+>>>>>>> 43fcfc8163b000b0d7f254ea9c207a39a528ed24
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Plus, Edit2, Trash2, Eye } from "../lib/icons";
