@@ -357,7 +357,6 @@ export default function Prescriptions() {
               <th className="p-2">Actions</th>
             </tr>
           </thead>
-
           <tbody>
             {prescriptions.length > 0 ? (
               prescriptions.map((p, index) => (
