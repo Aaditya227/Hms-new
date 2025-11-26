@@ -1,4 +1,4 @@
-// updated 2
+// updated 2 — with doctor-specific patient fetching (using user_id)
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "../components/common/Button";
@@ -7,9 +7,9 @@ import base_url from "../utils/baseurl";
 
 export default function Prescriptions() {
   const [prescriptions, setPrescriptions] = useState([]);
-  const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [medicines, setMedicines] = useState([]);
+  const [doctorPatients, setDoctorPatients] = useState([]); // Only patients of selected doctor
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     patientId: "",
@@ -26,14 +26,12 @@ export default function Prescriptions() {
   useEffect(() => {
     fetchAllPrescriptions();
     fetchDoctors();
-    fetchPatients();
     fetchMedicines();
   }, []);
 
   const fetchAllPrescriptions = async () => {
     try {
       const res = await axios.get(`${API_BASE}/prescriptions`);
-      // Updated to handle the new API response format
       if (res.data.success) {
         setPrescriptions(res.data.data);
       } else {
@@ -54,28 +52,44 @@ export default function Prescriptions() {
     }
   };
 
-  const fetchPatients = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/patients`);
-      setPatients(res.data.data || []);
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-    }
-  };
-
   const fetchMedicines = async () => {
     try {
-      // ✅ API returns array directly → res.data is correct
-      const res = await axios.get(`${API_BASE}/pharmacy`); // or /medicines — use your actual endpoint
+      const res = await axios.get(`${API_BASE}/pharmacy`);
       setMedicines(res.data || []);
     } catch (error) {
       console.error("Error fetching medicines:", error);
     }
   };
 
+  // ✅ Fetch patients assigned to a specific doctor (by user_id)
+  const fetchPatientsByDoctor = async (doctorId) => {
+    if (!doctorId) {
+      setDoctorPatients([]);
+      return;
+    }
+    try {
+      const res = await axios.get(`${API_BASE}/doctors/patients/${doctorId}`);
+      if (res.data.success) {
+        setDoctorPatients(res.data.data || []);
+      } else {
+        console.error("Failed to fetch doctor's patients");
+        setDoctorPatients([]);
+      }
+    } catch (error) {
+      console.error("Error fetching doctor's patients:", error);
+      setDoctorPatients([]);
+    }
+  };
+
   // ---------------- Handle Form ----------------
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "doctorId") {
+      fetchPatientsByDoctor(value);
+      setFormData((prev) => ({ ...prev, patientId: "" }));
+    }
   };
 
   const handleItemChange = (index, field, value) => {
@@ -100,27 +114,24 @@ export default function Prescriptions() {
   const handleSave = async () => {
     try {
       setLoading(true);
-      
-      // Transform the form data to match API requirements
+
       const payload = {
         patient_id: Number(formData.patientId),
-        doctor_id: Number(formData.doctorId),
+        doctor_id: Number(formData.doctorId), // matches user_id
         notes: formData.notes,
         items: formData.items.map((i) => ({
           medication_id: Number(i.medicineId),
-          name: medicines.find(m => m.id === i.medicineId)?.brand_name || "",
+          name: medicines.find((m) => m.id === i.medicineId)?.brand_name || "",
           dose: i.dosage,
           days: Number(i.durationDays),
-          quantity: Number(i.quantity)
+          quantity: Number(i.quantity),
         })),
       };
 
       if (editingId) {
         await axios.put(`${API_BASE}/prescriptions/${editingId}`, payload);
       } else {
-        // POST request to create new prescription
-        const response = await axios.post(`${API_BASE}/prescriptions`, payload);
-        console.log("Prescription created successfully:", response.data);
+        await axios.post(`${API_BASE}/prescriptions`, payload);
       }
 
       await fetchAllPrescriptions();
@@ -137,22 +148,24 @@ export default function Prescriptions() {
   const resetForm = () => {
     setEditingId(null);
     setFormData({ patientId: "", doctorId: "", notes: "", items: [] });
+    setDoctorPatients([]);
   };
 
   const handleEdit = (p) => {
     setEditingId(p.id);
     setFormData({
-      patientId: p.patient_id, // Updated to match API response field
-      doctorId: p.doctor_id,   // Updated to match API response field
+      patientId: p.patient_id,
+      doctorId: p.doctor_id, // this should be user_id
       notes: p.notes || "",
       items: p.items?.map((i) => ({
-        medicineId: i.medication_id, // Updated to match API response field
-        dosage: i.dose || "",        // Updated to match API response field
+        medicineId: i.medication_id,
+        dosage: i.dose || "",
         quantity: i.quantity || 1,
-        durationDays: i.days || 1,   // Updated to match API response field
+        durationDays: i.days || 1,
       })) || [],
     });
     setShowForm(true);
+    fetchPatientsByDoctor(p.doctor_id);
   };
 
   const handleDelete = async (id) => {
@@ -166,25 +179,17 @@ export default function Prescriptions() {
     }
   };
 
+  // ✅ Updated: find doctor by user_id (not employee_id)
   const getDoctorName = (id) => {
-    const doc = doctors.find((d) => d.employee_id === id);
+    const doc = doctors.find((d) => d.user_id === Number(id)); // compare as number
     return doc ? `${doc.first_name} ${doc.last_name} (${doc.specialization || "N/A"})` : "N/A";
   };
 
-  const getPatientName = (id) => {
-    const p = patients.find((pt) => pt.id === id);
-    return p ? `${p.first_name} ${p.last_name}` : "N/A";
-  };
-
-  // ✅ FIXED: Updated to handle the API response structure for medicines
   const getMedicineNames = (items) => {
     if (!items || items.length === 0) return "-";
-    
     return items
       .map((i) => {
-        // Use medication_name if available, otherwise use name
         const medicineName = i.medication_name || i.name || "Unknown";
-        // Use dose if available
         const dosage = i.dose || "";
         return dosage ? `${medicineName} (${dosage})` : medicineName;
       })
@@ -226,11 +231,12 @@ export default function Prescriptions() {
                   value={formData.patientId}
                   onChange={handleChange}
                   className="w-full mt-1 p-2 border rounded-md"
+                  disabled={!formData.doctorId}
                 >
                   <option value="">Select Patient</option>
-                  {patients.map((p) => (
+                  {doctorPatients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.first_name} {p.last_name}
+                      {p.first_name} {p.last_name} {p.age ? `(${p.age} yrs)` : ""}
                     </option>
                   ))}
                 </select>
@@ -246,7 +252,8 @@ export default function Prescriptions() {
                 >
                   <option value="">Select Doctor</option>
                   {doctors.map((d) => (
-                    <option key={d.employee_id} value={d.employee_id}>
+                    // ✅ FIXED: use user_id as value and key
+                    <option key={d.user_id} value={d.user_id}>
                       {d.first_name} {d.last_name} — {d.specialization}
                     </option>
                   ))}
@@ -285,7 +292,6 @@ export default function Prescriptions() {
                     className="p-2 border rounded-md"
                   >
                     <option value="">Select Medicine</option>
-                    {/* ✅ FIXED: Use brand_name and strength */}
                     {medicines.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.brand_name} — {m.strength}
@@ -307,6 +313,7 @@ export default function Prescriptions() {
                     value={item.quantity}
                     onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
                     className="p-2 border rounded-md"
+                    min="1"
                   />
 
                   <input
@@ -315,6 +322,7 @@ export default function Prescriptions() {
                     value={item.durationDays}
                     onChange={(e) => handleItemChange(index, "durationDays", e.target.value)}
                     className="p-2 border rounded-md"
+                    min="1"
                   />
 
                   <button
@@ -355,7 +363,6 @@ export default function Prescriptions() {
               prescriptions.map((p, index) => (
                 <tr key={p.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-2">{index + 1}</td>
-                  {/* Updated to use the API response fields directly */}
                   <td className="px-4 py-2">{p.patient_first_name} {p.patient_last_name}</td>
                   <td className="px-4 py-2">{p.doctor_first_name} {p.doctor_last_name}</td>
                   <td className="px-4 py-2">{getMedicineNames(p.items)}</td>
