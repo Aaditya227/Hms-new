@@ -33,7 +33,13 @@ export default function Prescriptions() {
   const fetchAllPrescriptions = async () => {
     try {
       const res = await axios.get(`${API_BASE}/prescriptions`);
-      setPrescriptions(res.data);
+      // Updated to handle the new API response format
+      if (res.data.success) {
+        setPrescriptions(res.data.data);
+      } else {
+        console.error("API returned unsuccessful response");
+        setPrescriptions([]);
+      }
     } catch (error) {
       console.error("Error fetching prescriptions:", error);
     }
@@ -136,14 +142,14 @@ export default function Prescriptions() {
   const handleEdit = (p) => {
     setEditingId(p.id);
     setFormData({
-      patientId: p.patientId,
-      doctorId: p.doctorId,
+      patientId: p.patient_id, // Updated to match API response field
+      doctorId: p.doctor_id,   // Updated to match API response field
       notes: p.notes || "",
       items: p.items?.map((i) => ({
-        medicineId: i.medicineId,
-        dosage: i.dosage || "",
+        medicineId: i.medication_id, // Updated to match API response field
+        dosage: i.dose || "",        // Updated to match API response field
         quantity: i.quantity || 1,
-        durationDays: i.durationDays || 1,
+        durationDays: i.days || 1,   // Updated to match API response field
       })) || [],
     });
     setShowForm(true);
@@ -170,12 +176,17 @@ export default function Prescriptions() {
     return p ? `${p.first_name} ${p.last_name}` : "N/A";
   };
 
-  // ✅ FIXED: Use brand_name (not brandName)
+  // ✅ FIXED: Updated to handle the API response structure for medicines
   const getMedicineNames = (items) => {
+    if (!items || items.length === 0) return "-";
+    
     return items
-      ?.map((i) => {
-        const m = medicines.find((med) => med.id === i.medicineId);
-        return m ? `${m.brand_name} (${i.dosage})` : "-";
+      .map((i) => {
+        // Use medication_name if available, otherwise use name
+        const medicineName = i.medication_name || i.name || "Unknown";
+        // Use dose if available
+        const dosage = i.dose || "";
+        return dosage ? `${medicineName} (${dosage})` : medicineName;
       })
       .join(", ");
   };
@@ -344,8 +355,9 @@ export default function Prescriptions() {
               prescriptions.map((p, index) => (
                 <tr key={p.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{getPatientName(p.patientId)}</td>
-                  <td className="px-4 py-2">{getDoctorName(p.doctorId)}</td>
+                  {/* Updated to use the API response fields directly */}
+                  <td className="px-4 py-2">{p.patient_first_name} {p.patient_last_name}</td>
+                  <td className="px-4 py-2">{p.doctor_first_name} {p.doctor_last_name}</td>
                   <td className="px-4 py-2">{getMedicineNames(p.items)}</td>
                   <td className="px-4 py-2">{p.notes || "-"}</td>
                   <td className="px-4 py-2 flex gap-3">

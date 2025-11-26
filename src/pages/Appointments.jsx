@@ -1,10 +1,7 @@
-<<<<<<< HEAD
 
 
 // update
 
-=======
->>>>>>> 43fcfc8163b000b0d7f254ea9c207a39a528ed24
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import base_url from "../utils/baseurl";
