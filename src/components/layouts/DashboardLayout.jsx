@@ -58,7 +58,7 @@ const navItems = [
   { label: "Patients", path: "/dashboard/receptionist-patients", icon: Users, roles: ["RECEPTIONIST"] },
   { label: "Appointments", path: "/dashboard/receptionist-appointments", icon: Calendar, roles: ["RECEPTIONIST"] },
   // patient
-  { label: "Appointment", path: "/dashboard/patients-appointments", icon: Calendar, roles: ["PATIENT"] },
+  { label: "Appointment", path: "/dashboard/patient-appointment", icon: Calendar, roles: ["PATIENT"] },
   { label: "Prescriptions", path: "/dashboard/patient-prescriptions", icon: FileText, roles: ["PATIENT"] },
   { label: "Doctor", path: "/dashboard/patient-doctor", icon: Users, roles: ["PATIENT"] },
   { label: "Lab Report", path: "/dashboard/patient-lab-report", icon: FlaskConical, roles: ["PATIENT"] },
