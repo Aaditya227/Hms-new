@@ -163,6 +163,10 @@ function App() {
                 // doctors  routes//
                 { path: "doctorspatient", Component: DoctorsPatient },
                 {path: "doctorsappointment", Component: DoctorsAppointment },
+<<<<<<< HEAD
+=======
+                {path: "doctors-prescription", Component: DoctorsPrescriptions},
+>>>>>>> 2cdd44dea07f533a23be258939cb5f418041564c
                 {path: "doctors-prescriptions", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
@@ -180,7 +184,7 @@ function App() {
                 // patient routes//
 
                 {path: "patient-appointment", Component: PatientsAppointments },
-                {patch: "patient-prescriptions", Component: PatientPrescription},
+                {path: "patient-prescriptions", Component: PatientPrescription},
                 {path: "patient-doctor", Component: PatientDoctor },
                 {path: "patient-lab-report", Component: PatientLabReport},
                 {path: "patient-radiology", Component: PatientRadiologyReport},
