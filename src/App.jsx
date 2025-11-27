@@ -164,6 +164,7 @@ function App() {
                 { path: "doctorspatient", Component: DoctorsPatient },
                 {path: "doctorsappointment", Component: DoctorsAppointment },
                 {path: "doctors-prescription", Component: DoctorsPrescriptions},
+                {path: "doctors-prescriptions", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
                 // doctors end route// 
