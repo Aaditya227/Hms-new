@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FlaskConical, Search, Check, X, Upload, FileText, Download } from "../lib/icons.js";
 import { DataTable } from "../components/common/DataTable.jsx";
+import axiosInstance from "../utils/axiosInstance.js"; // Import your axios instance
 
 export function LabReport() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -10,16 +11,22 @@ export function LabReport() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Status Color
   const getStatusColor = (status) => {
     switch (status) {
+      case "Pending":
       case "PENDING":
         return "bg-yellow-100 text-yellow-700";
+      case "Accepted":
       case "ACCEPTED":
         return "bg-green-100 text-green-700";
+      case "Rejected":
       case "REJECTED":
         return "bg-red-100 text-red-700";
+      case "Completed":
       case "COMPLETED":
         return "bg-blue-100 text-blue-700";
       default:
@@ -27,25 +34,40 @@ export function LabReport() {
     }
   };
 
-  // === MOCK DATA FOR LAB ORDERS ===
-  const mockLabTests = [
-    { id: 1, doctorName: "Dr. Smith", patientName: "John Doe", testName: "Blood Test", status: "ACCEPTED", requestDate: "2023-05-15", price: 120.00 },
-    { id: 2, doctorName: "Dr. Johnson", patientName: "Jane Smith", testName: "X-Ray", status: "ACCEPTED", requestDate: "2023-05-16", price: 250.00 },
-    { id: 3, doctorName: "Dr. Williams", patientName: "Robert Johnson", testName: "MRI Scan", status: "COMPLETED", requestDate: "2023-05-10", reportDate: "2023-05-12", price: 850.00 },
-    { id: 4, doctorName: "Dr. Brown", patientName: "Emily Davis", testName: "Urine Test", status: "REJECTED", requestDate: "2023-05-11", price: 75.00 },
-    { id: 5, doctorName: "Dr. Miller", patientName: "Michael Wilson", testName: "ECG", status: "ACCEPTED", requestDate: "2023-05-17", price: 150.00 },
-    { id: 6, doctorName: "Dr. Davis", patientName: "Sarah Taylor", testName: "CT Scan", status: "COMPLETED", requestDate: "2023-05-08", reportDate: "2023-05-09", price: 650.00 },
-  ];
-
-  // === FETCH LAB ORDERS (using mock data) ===
+  // === FETCH LAB ORDERS (using API) ===
   const fetchLabOrders = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Simulating API delay
-      setTimeout(() => {
-        setLabTests(mockLabTests);
-      }, 500);
+      const response = await axiosInstance.get('/labs/lab-requests');
+      console.log("API Response:", response.data); // Log the response for debugging
+      
+      // Check if response.data is an array
+      if (Array.isArray(response.data)) {
+        // Transform the API response to match your component's expected format
+        const transformedData = response.data.map(item => ({
+          id: item.id,
+          doctorName: item.doctor_name,
+          patientName: item.patient_name,
+          testName: item.test_name,
+          status: item.status, // Keep original status case
+          requestDate: new Date(item.created_at).toISOString().split('T')[0], // Format date
+          price: parseFloat(item.price),
+          patient_id: item.patient_id,
+          test_id: item.test_id,
+          requested_by: item.requested_by
+        }));
+        setLabTests(transformedData);
+        console.log("Transformed Data:", transformedData); // Log transformed data
+      } else {
+        console.error("API response is not an array:", response.data);
+        setError("Invalid data format received from server");
+      }
     } catch (error) {
       console.error("Error fetching lab orders:", error);
+      setError("Failed to fetch lab orders. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,25 +89,35 @@ export function LabReport() {
     setIsUploading(true);
     
     try {
-      // Simulate API call
-      setTimeout(() => {
-        // Update the status in the local state
-        setLabTests(prevTests => 
-          prevTests.map(test => 
-            test.id === selectedTest.id 
-              ? { ...test, status: "COMPLETED", reportDate: new Date().toISOString().split('T')[0] } 
-              : test
-          )
-        );
-        
-        // Reset form and close modal
-        setSelectedFile(null);
-        setNotes("");
-        setShowUploadModal(false);
-        setIsUploading(false);
-        
-        alert("Report uploaded successfully!");
-      }, 1500);
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('notes', notes);
+      formData.append('labRequestId', selectedTest.id);
+      
+      // Make API call to upload report
+      await axiosInstance.post('/labs/upload-report', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Update the status in the local state
+      setLabTests(prevTests => 
+        prevTests.map(test => 
+          test.id === selectedTest.id 
+            ? { ...test, status: "COMPLETED", reportDate: new Date().toISOString().split('T')[0] } 
+            : test
+        )
+      );
+      
+      // Reset form and close modal
+      setSelectedFile(null);
+      setNotes("");
+      setShowUploadModal(false);
+      setIsUploading(false);
+      
+      alert("Report uploaded successfully!");
     } catch (error) {
       console.error("Error uploading report:", error);
       setIsUploading(false);
@@ -110,10 +142,9 @@ export function LabReport() {
   // === FILTER DATA ===
   const filteredTests = labTests.filter(
     (t) =>
-      (t.doctorName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.doctorName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.patientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.testName?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      (t.status === "ACCEPTED" || t.status === "COMPLETED")
+      t.testName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Format price as currency
@@ -150,64 +181,83 @@ export function LabReport() {
           </div>
         </div>
 
-        <DataTable
-          data={filteredTests}
-          columns={[
-            { header: "ID", accessor: "id" },
-            { header: "Doctor", accessor: "doctorName" },
-            { header: "Patient", accessor: "patientName" },
-            { header: "Test Name", accessor: "testName" },
-            { header: "Request Date", accessor: "requestDate" },
-            { 
-              header: "Price", 
-              accessor: (row) => (
-                <span className="font-medium">
-                  {formatPrice(row.price)}
-                </span>
-              )
-            },
-            {
-              header: "Status",
-              accessor: (row) => (
-                <span
-                  className={`px-3 py-1 rounded-full text-md font-medium ${getStatusColor(row.status)}`}
-                >
-                  {row.status}
-                </span>
-              ),
-            },
-            {
-              header: "Report Date",
-              accessor: (row) => row.reportDate || "-",
-            },
-            {
-              header: "Actions",
-              accessor: (row) => (
-                <div className="flex gap-2">
-                  {row.status === "ACCEPTED" && (
-                    <button
-                      onClick={() => openUploadModal(row)}
-                      className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                      title="Upload Report"
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span className="hidden sm:inline">Upload</span>
-                    </button>
-                  )}
-                  {row.status === "COMPLETED" && (
-                    <button
-                      className="text-green-600 hover:text-green-800 flex items-center gap-1"
-                      title="Download Report"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span className="hidden sm:inline">Download</span>
-                    </button>
-                  )}
-                </div>
-              ),
-            },
-          ]}
-        />
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <DataTable
+            data={filteredTests}
+            columns={[
+              { header: "ID", accessor: "id" },
+              { header: "Doctor", accessor: "doctorName" },
+              { header: "Patient", accessor: "patientName" },
+              { header: "Test Name", accessor: "testName" },
+              { header: "Request Date", accessor: "requestDate" },
+              { 
+                header: "Price", 
+                accessor: (row) => (
+                  <span className="font-medium">
+                    {formatPrice(row.price)}
+                  </span>
+                )
+              },
+              {
+                header: "Status",
+                accessor: (row) => (
+                  <span
+                    className={`px-3 py-1 rounded-full text-md font-medium ${getStatusColor(row.status)}`}
+                  >
+                    {row.status}
+                  </span>
+                ),
+              },
+              {
+                header: "Report Date",
+                accessor: (row) => row.reportDate || "-",
+              },
+              {
+                header: "Actions",
+                accessor: (row) => (
+                  <div className="flex gap-2">
+                    {(row.status === "ACCEPTED" || row.status === "Accepted") && (
+                      <button
+                        onClick={() => openUploadModal(row)}
+                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        title="Upload Report"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span className="hidden sm:inline">Upload</span>
+                      </button>
+                    )}
+                    {(row.status === "COMPLETED" || row.status === "Completed") && (
+                      <button
+                        className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                        title="Download Report"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">Download</span>
+                      </button>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+          />
+        )}
       </div>
 
       {/* Upload Report Modal */}

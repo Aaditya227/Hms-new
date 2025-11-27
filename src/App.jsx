@@ -31,12 +31,16 @@ const dashboards = {
 
 //  Common Pages
 const Patients = lazyImport(() => import("./pages/Patients"));
+// doctors 
 const DoctorsPatient = lazyImport(() => import("./pages/DoctorsPatient"));
 const DoctorsAppointment = lazyImport(() => import("./pages/DoctorsAppointments"));
 const DoctorsPrescriptions = lazyImport(() => import("./pages/DoctorsPrescriptions"));
 const DoctorsRadiology = lazyImport(() => import("./pages/DoctorsRadiology"));
 const DoctorsLaboratory = lazyImport(() => import("./pages/DoctorsLaboratory"));
 const DoctorPharmacy = lazyImport(() => import("./pages/DoctorPharmacy"));
+const DoctorLabReport = lazyImport(() => import("./pages/DoctorLabReport"));
+const DoctorRadiologyReport = lazyImport(() => import("./pages/DoctorRadiologyReport"));
+//end doctors 
 const Appointments = lazyImport(() => import("./pages/Appointments"));
 const Prescriptions = lazyImport(() => import("./pages/Prescriptions"));
 const Pharmacy = lazyImport(() => import("./pages/Pharmacy"));
@@ -167,6 +171,8 @@ function App() {
                 {path: "doctors-prescriptions", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
+                {path: "doctor-lab-report", Component: DoctorLabReport},
+                {path: "doctor-radiology-report", Component: DoctorRadiologyReport},
                 // doctors end route// 
                 { path: "doctor-pharmacy", Component: DoctorPharmacy },
    // doctors end route// 
