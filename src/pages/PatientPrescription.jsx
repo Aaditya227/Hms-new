@@ -1,12 +1,7 @@
-
-
-// updated 2
-
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "../components/common/Button";
-import { X, Edit2, Trash2, Plus } from "lucide-react";
+import { X, Edit2, Trash2, Plus, Eye } from "lucide-react";
 import base_url from "../utils/baseurl";
 
 export default function PatientPrescription() {
@@ -22,54 +17,81 @@ export default function PatientPrescription() {
     items: [],
   });
   const [showForm, setShowForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const API_BASE = `${base_url}`;
 
+  // Get patient ID from localStorage
+  const getPatientId = () => {
+    const authData = JSON.parse(localStorage.getItem("authData") || "{}");
+    return authData.user?.id;
+  };
+
   // ---------------- Fetch Data ----------------
   useEffect(() => {
-    fetchAllPrescriptions();
-    fetchDoctors();
+    fetchPrescriptionsByPatient();
     fetchPatients();
+    fetchDoctors();
     fetchMedicines();
   }, []);
 
-  const fetchAllPrescriptions = async () => {
+  const fetchPrescriptionsByPatient = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/prescriptions`);
-      setPrescriptions(res.data);
+      setDataLoading(true);
+      const patientId = getPatientId();
+      if (!patientId) {
+        console.error("No patient ID found in localStorage");
+        return;
+      }
+      
+      const response = await axios.get(`${API_BASE}/prescriptions/by-patient/${patientId}`);
+      if (response.data.success) {
+        setPrescriptions(response.data.data);
+      }
     } catch (error) {
       console.error("Error fetching prescriptions:", error);
-    }
-  };
-
-  const fetchDoctors = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/doctors`);
-      setDoctors(res.data);
-    } catch (error) {
-      console.error("Error fetching doctors:", error);
+      alert("Failed to fetch prescriptions!");
+    } finally {
+      setDataLoading(false);
     }
   };
 
   const fetchPatients = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/patients`);
-      setPatients(res.data);
+      const response = await axios.get(`${API_BASE}/patients`);
+      if (response.data.success) {
+        setPatients(response.data.data);
+      }
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
   };
 
+  const fetchDoctors = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/doctors`);
+      if (response.data.success) {
+        setDoctors(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
+  };
+
   const fetchMedicines = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/medicines`);
-      setMedicines(res.data);
+      const response = await axios.get(`${API_BASE}/medicines`);
+      if (response.data.success) {
+        setMedicines(response.data.data);
+      }
     } catch (error) {
       console.error("Error fetching medicines:", error);
     }
   };
-
+ 
   // ---------------- Handle Form ----------------
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -115,7 +137,7 @@ export default function PatientPrescription() {
         await axios.post(`${API_BASE}/prescriptions`, payload);
       }
 
-      await fetchAllPrescriptions();
+      await fetchPrescriptionsByPatient();
       setShowForm(false);
       resetForm();
     } catch (error) {
@@ -128,20 +150,25 @@ export default function PatientPrescription() {
 
   const resetForm = () => {
     setEditingId(null);
-    setFormData({ patientId: "", doctorId: "", notes: "", items: [] });
+    setFormData({ 
+      patientId: getPatientId() || "", 
+      doctorId: "", 
+      notes: "", 
+      items: [] 
+    });
   };
 
   const handleEdit = (p) => {
     setEditingId(p.id);
     setFormData({
-      patientId: p.patientId,
-      doctorId: p.doctorId,
+      patientId: p.patient_id,
+      doctorId: p.doctor_id,
       notes: p.notes || "",
       items: p.items?.map((i) => ({
-        medicineId: i.medicineId,
-        dosage: i.dosage || "",
+        medicineId: i.medication_id,
+        dosage: i.dose || "",
         quantity: i.quantity || 1,
-        durationDays: i.durationDays || 1,
+        durationDays: i.days || 1,
       })) || [],
     });
     setShowForm(true);
@@ -151,28 +178,51 @@ export default function PatientPrescription() {
     if (!window.confirm("Are you sure you want to delete this prescription?")) return;
     try {
       await axios.delete(`${API_BASE}/prescriptions/${id}`);
-      await fetchAllPrescriptions();
+      await fetchPrescriptionsByPatient();
     } catch (error) {
       console.error("Error deleting prescription:", error);
       alert("Failed to delete prescription!");
     }
   };
 
+  const handleView = (prescription) => {
+    setSelectedPrescription(prescription);
+    setShowDetails(true);
+  };
+
   const getDoctorName = (id) => {
     const doc = doctors.find((d) => d.id === id);
-    return doc ? `${doc.fullName} (${doc.speciality})` : "N/A";
+    return doc ? `${doc.first_name} ${doc.last_name} (${doc.speciality})` : "N/A";
   };
 
   const getPatientName = (id) => {
     const p = patients.find((pt) => pt.id === id);
-    return p ? `${p.user?.firstName} ${p.user?.lastName}` : "N/A";
+    return p ? `${p.first_name} ${p.last_name}` : "N/A";
   };
 
+  // Updated function to get medicine names based on the API response structure
   const getMedicineNames = (items) => {
+    if (!items || items.length === 0) return "-";
+    
     return items
-      ?.map((i) => {
-        const m = medicines.find((med) => med.id === i.medicineId);
-        return m ? `${m.brandName} (${i.dosage})` : "-";
+      .map((item) => {
+        // Try to get the medicine name from the item data first
+        if (item.medication_name) {
+          return `${item.medication_name} (${item.dose})`;
+        }
+        
+        // If medication_name is not available, use the name field
+        if (item.name) {
+          return `${item.name} (${item.dose})`;
+        }
+        
+        // If neither is available, check the medicines array
+        const medicine = medicines.find((med) => med.id === item.medication_id);
+        if (medicine) {
+          return `${medicine.brand_name || medicine.name} (${item.dose})`;
+        }
+        
+        return "-";
       })
       .join(", ");
   };
@@ -182,11 +232,7 @@ export default function PatientPrescription() {
     <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-        <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Prescriptions</h2>
-
-        <Button onClick={() => { resetForm(); setShowForm(true); }} className="w-full sm:w-auto">
-          + Add Prescription
-        </Button>
+        <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">My Prescriptions</h2>
       </div>
 
       {/* ---------------- Form Modal ---------------- */}
@@ -213,7 +259,7 @@ export default function PatientPrescription() {
                   <option value="">Select Patient</option>
                   {patients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.user?.firstName} {p.user?.lastName}
+                      {p.first_name} {p.last_name}
                     </option>
                   ))}
                 </select>
@@ -226,7 +272,7 @@ export default function PatientPrescription() {
                   <option value="">Select Doctor</option>
                   {doctors.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.fullName} — {d.speciality}
+                      {d.first_name} {d.last_name} — {d.speciality}
                     </option>
                   ))}
                 </select>
@@ -248,7 +294,6 @@ export default function PatientPrescription() {
             {/* Medicine Items */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                {/* <h4 className="font-semibold">Medicines</h4> */}
                 <Button onClick={addItem} className="flex items-center gap-2 w-full sm:w-auto">
                   <Plus size={16} /> Add Medicine
                 </Button>
@@ -265,7 +310,7 @@ export default function PatientPrescription() {
                   >
                     <option value="">Select Medicine</option>
                     {medicines.map((m) => (
-                      <option key={m.id} value={m.id}>{m.brandName} — {m.strength}</option>
+                      <option key={m.id} value={m.id}>{m.brand_name || m.name} — {m.strength}</option>
                     ))}
                   </select>
 
@@ -312,43 +357,132 @@ export default function PatientPrescription() {
         </div>
       )}
 
+      {/* ---------------- Details Modal ---------------- */}
+      {showDetails && selectedPrescription && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full sm:w-[90%] md:w-[700px] relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowDetails(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-xl font-semibold mb-4">Prescription Details</h3>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-700">Prescription ID</h4>
+                <p className="text-gray-900">{selectedPrescription.id}</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-700">Date</h4>
+                <p className="text-gray-900">{new Date(selectedPrescription.created_at).toLocaleDateString()}</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-700">Doctor</h4>
+                <p className="text-gray-900">
+                  {selectedPrescription.doctor_first_name} {selectedPrescription.doctor_last_name}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-700">Patient</h4>
+                <p className="text-gray-900">
+                  {selectedPrescription.patient_first_name} {selectedPrescription.patient_last_name}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-700">Notes</h4>
+                <p className="text-gray-900">{selectedPrescription.notes || "No notes provided"}</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-700">Medicines</h4>
+                {selectedPrescription.items && selectedPrescription.items.length > 0 ? (
+                  <div className="mt-2 border rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (Days)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {selectedPrescription.items.map((item, index) => (
+                          <tr key={index}>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              {item.medication_name || item.name || 
+                                (medicines.find(m => m.id === item.medication_id)?.brand_name || 
+                                 medicines.find(m => m.id === item.medication_id)?.name || "N/A")}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap">{item.dose || item.dosage || "N/A"}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{item.quantity || "N/A"}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{item.days || item.durationDays || "N/A"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-900">No medicines prescribed</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <Button 
+                onClick={() => setShowDetails(false)} 
+                className="text-white w-full sm:w-auto"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ---------------- Table ---------------- */}
       <div className="mt-8 overflow-x-auto">
         <table className="min-w-full border border-gray-200 rounded-lg text-md">
           <thead className="bg-gray-50">
             <tr className="text-left">
               <th className="p-2">Id</th>
-              <th className="p-2">Patient</th>
               <th className="p-2">Doctor</th>
               <th className="p-2">Medicines</th>
               <th className="p-2">Notes</th>
+              <th className="p-2">Date</th>
               <th className="p-2">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {prescriptions.length > 0 ? (
+            {dataLoading ? (
+              <tr>
+                <td colSpan="6" className="text-center py-6 text-gray-500 italic">
+                  Loading prescriptions...
+                </td>
+              </tr>
+            ) : prescriptions.length > 0 ? (
               prescriptions.map((p, index) => (
                 <tr key={p.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{getPatientName(p.patientId)}</td>
-                  <td className="px-4 py-2">{getDoctorName(p.doctorId)}</td>
+                  <td className="px-4 py-2">{p.doctor_first_name} {p.doctor_last_name}</td>
                   <td className="px-4 py-2">{getMedicineNames(p.items)}</td>
                   <td className="px-4 py-2">{p.notes || "-"}</td>
+                  <td className="px-4 py-2">{new Date(p.created_at).toLocaleDateString()}</td>
 
-                  <td className="px-4 py-2 flex gap-3">
+                  <td className="px-4 py-2">
                     <button
-                      onClick={() => handleEdit(p)}
-                      className="text-blue-600 hover:text-blue-800"
+                      onClick={() => handleView(p)}
+                      className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                     >
-                      <Edit2 size={16} />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 size={16} />
+                      <Eye size={16} /> 
                     </button>
                   </td>
                 </tr>
@@ -366,4 +500,3 @@ export default function PatientPrescription() {
     </div>
   );
 }
-

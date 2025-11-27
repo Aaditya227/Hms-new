@@ -163,7 +163,7 @@ function App() {
                 // doctors  routes//
                 { path: "doctorspatient", Component: DoctorsPatient },
                 {path: "doctorsappointment", Component: DoctorsAppointment },
-                {patch: "doctors-prescription", Component: DoctorsPrescriptions},
+                {path: "doctors-prescription", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
                 // doctors end route// 
@@ -180,7 +180,7 @@ function App() {
                 // patient routes//
 
                 {path: "patient-appointment", Component: PatientsAppointments },
-                {patch: "patient-prescriptions", Component: PatientPrescription},
+                {path: "patient-prescriptions", Component: PatientPrescription},
                 {path: "patient-doctor", Component: PatientDoctor },
                 {path: "patient-lab-report", Component: PatientLabReport},
                 {path: "patient-radiology", Component: PatientRadiologyReport},

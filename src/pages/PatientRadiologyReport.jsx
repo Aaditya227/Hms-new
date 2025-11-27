@@ -13,18 +13,30 @@ export default function PatientRadiologyReport() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Fetch reports
+  // Fetch reports for the specific patient
   useEffect(() => {
-    fetchReports();
+    fetchPatientReports();
   }, []);
 
-  const fetchReports = async () => {
+  const fetchPatientReports = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${base_url}/radiologyreports`);
+      
+      // Get patient ID from localStorage
+      const authData = JSON.parse(localStorage.getItem("authData") || "{}");
+      const patientId = authData.user?.id;
+      
+      if (!patientId) {
+        console.error("Patient ID not found in authData");
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch reports for the specific patient
+      const res = await axios.get(`${base_url}/radiology/results/patient/${patientId}`);
       setReports(res.data.data || []);
     } catch (error) {
-      console.error("Error fetching radiology reports:", error);
+      console.error("Error fetching patient radiology reports:", error);
     } finally {
       setLoading(false);
     }
@@ -62,10 +74,10 @@ export default function PatientRadiologyReport() {
       <div className="flex flex-wrap items-center justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-display font-bold text-gray-900">
-            Patient Radiology Reports
+            My Radiology Reports
           </h1>
           <p className="text-gray-600 mt-1">
-            View radiology test results and report information
+            View your radiology test results and report information
           </p>
         </div>
       </div>
@@ -111,7 +123,7 @@ export default function PatientRadiologyReport() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by patient, report type, or ID..."
+              placeholder="Search by report type, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -129,7 +141,6 @@ export default function PatientRadiologyReport() {
             <DataTable
               data={filteredReports}
               columns={[
-                { header: "Patient", accessor: "patient_name" },
                 { header: "Report Type", accessor: "report_type" },
                 {
                   header: "Date",
@@ -197,9 +208,6 @@ export default function PatientRadiologyReport() {
               <strong>ID:</strong> {selectedReport.id}
             </p>
             <p>
-              <strong>Patient:</strong> {selectedReport.patient_name}
-            </p>
-            <p>
               <strong>Report Type:</strong> {selectedReport.report_type}
             </p>
             <p>
@@ -209,7 +217,7 @@ export default function PatientRadiologyReport() {
             <p>
               <strong>Status:</strong> {selectedReport.status}
             </p>
-            <p>
+            <p className="col-span-2">
               <strong>Description:</strong>{" "}
               {selectedReport.description || "—"}
             </p>

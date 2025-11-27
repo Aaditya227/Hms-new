@@ -9,19 +9,36 @@ export default function PatientLabReport() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [patientId, setPatientId] = useState(null);
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Fetch reports
+  // Get patient ID from localStorage
   useEffect(() => {
-    fetchReports();
+    try {
+      const authData = JSON.parse(localStorage.getItem("authData") || "{}");
+      if (authData.user && authData.user.id) {
+        setPatientId(authData.user.id);
+      }
+    } catch (error) {
+      console.error("Error parsing auth data from localStorage:", error);
+    }
   }, []);
 
-  const fetchReports = async () => {
+  // Fetch reports for the specific patient
+  useEffect(() => {
+    if (patientId) {
+      fetchPatientReports();
+    }
+  }, [patientId]);
+
+  const fetchPatientReports = async () => {
+    if (!patientId) return;
+    
     try {
       setLoading(true);
-      const res = await axios.get(`${base_url}/labreports`);
+      const res = await axios.get(`${base_url}/labs/lab-results/patient/${patientId}`);
       setReports(res.data.data || []);
     } catch (error) {
       console.error("Error fetching lab reports:", error);
@@ -62,10 +79,10 @@ export default function PatientLabReport() {
       <div className="flex flex-wrap items-center justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-display font-bold text-gray-900">
-            Patient Lab Reports
+            My Lab Reports
           </h1>
           <p className="text-gray-600 mt-1">
-            View lab test results and report information
+            View your lab test results and report information
           </p>
         </div>
       </div>
@@ -111,7 +128,7 @@ export default function PatientLabReport() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by patient, report type, or ID..."
+              placeholder="Search by report type, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -129,7 +146,6 @@ export default function PatientLabReport() {
             <DataTable
               data={filteredReports}
               columns={[
-                { header: "Patient", accessor: "patient_name" },
                 { header: "Report Type", accessor: "report_type" },
                 {
                   header: "Date",
@@ -197,9 +213,6 @@ export default function PatientLabReport() {
               <strong>ID:</strong> {selectedReport.id}
             </p>
             <p>
-              <strong>Patient:</strong> {selectedReport.patient_name}
-            </p>
-            <p>
               <strong>Report Type:</strong> {selectedReport.report_type}
             </p>
             <p>
@@ -209,7 +222,7 @@ export default function PatientLabReport() {
             <p>
               <strong>Status:</strong> {selectedReport.status}
             </p>
-            <p>
+            <p className="col-span-2">
               <strong>Description:</strong>{" "}
               {selectedReport.description || "—"}
             </p>
