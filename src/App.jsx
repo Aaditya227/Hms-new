@@ -10,6 +10,7 @@ import { BeaconManager } from "./pages/BeaconManager";
 
 
 
+
 //  Login + Layout
 const Login = lazyImport(() => import("./pages/Login"));
 const DashboardLayout = lazyImport(() => import("./components/layouts/DashboardLayout"));
@@ -68,6 +69,8 @@ const LabReport = lazyImport(() => import("./pages/LabReport"));
 //Radiologist
 const RadiologyRequest = lazyImport(() => import("./pages/RadiologyRequest"));
 const RadiologyReport = lazyImport(() => import("./pages/RadiologyReport"));
+
+
 /* ------------------ Loader ------------------ */
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-hospital-purple/20 via-white to-teal-500/20 flex items-center justify-center">
@@ -163,10 +166,7 @@ function App() {
                 // doctors  routes//
                 { path: "doctorspatient", Component: DoctorsPatient },
                 {path: "doctorsappointment", Component: DoctorsAppointment },
-<<<<<<< HEAD
-=======
                 {path: "doctors-prescription", Component: DoctorsPrescriptions},
->>>>>>> 2cdd44dea07f533a23be258939cb5f418041564c
                 {path: "doctors-prescriptions", Component: DoctorsPrescriptions},
                 {path: "doctors-radiology", Component: DoctorsRadiology },
                 {path: "doctors-laboratory", Component: DoctorsLaboratory },
