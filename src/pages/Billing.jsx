@@ -1,6 +1,7 @@
-// update 3 – Professional Billing UI (UI-Only, No API)
+// Billing.jsx
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Mock data
 const mockPatients = [
@@ -21,11 +22,9 @@ const mockServices = [
 const initialLineItem = { serviceId: "", description: "", quantity: 1, rate: "" };
 
 export default function Billing() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewData, setPreviewData] = useState(null);
   const [editInvoice, setEditInvoice] = useState(null);
-
   const [lineItems, setLineItems] = useState([initialLineItem]);
 
   const [formData, setFormData] = useState({
@@ -93,6 +92,30 @@ export default function Billing() {
 
   const totalAmount = calculateTotals();
 
+  const handleNewInvoice = () => {
+    // Auto-generate invoice number
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const invNum = `INV-${year}${month}-${String(mockInvoices.length + 1).padStart(3, "0")}`;
+
+    // Create default invoice data
+    const invoiceData = {
+      invoiceNumber: invNum,
+      issuedAt: new Date().toISOString().split("T")[0],
+      patient: mockPatients[0], // Default to first patient
+      lineItems: [
+        { description: "General Consultation", quantity: 1, rate: 1200 }
+      ],
+      totalAmount: 1200,
+      paidAmount: 0,
+      paymentStatus: "PENDING",
+    };
+
+    // Navigate to the billing-invoice path with default data
+    navigate("/dashboard/billing-invoice", { state: { invoiceData } });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -119,8 +142,8 @@ export default function Billing() {
       paymentStatus: "PENDING",
     };
 
-    setPreviewData(invoiceData);
-    setShowPreview(true);
+    // Navigate to the billing-invoice path
+    navigate("/billing-invoice", { state: { invoiceData } });
     setShowForm(false);
   };
 
@@ -144,6 +167,29 @@ export default function Billing() {
     alert("🗑️ UI Demo: Delete clicked (no API call)");
   };
 
+  const handleViewInvoice = (invoiceId) => {
+    // Find the invoice in mockInvoices
+    const invoice = mockInvoices.find(inv => inv.invoiceNumber === invoiceId);
+
+    if (invoice) {
+      navigate("/billing-invoice", {
+        state: {
+          invoiceData: {
+            ...invoice,
+            issuedAt: new Date().toISOString().split("T")[0],
+            lineItems: [
+              { description: "General Consultation", quantity: 1, rate: 1200 },
+              { description: "Complete Blood Count (CBC)", quantity: 1, rate: 350 },
+              { description: "X-Ray (Single View)", quantity: 1, rate: 600 }
+            ]
+          }
+        }
+      });
+    } else {
+      navigate("/billing-invoice");
+    }
+  };
+
   // Mock invoices for table (non-editable in this demo)
   const mockInvoices = [
     {
@@ -162,10 +208,7 @@ export default function Billing() {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">🧾 Billing Management</h2>
         <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
+          onClick={handleNewInvoice}
           className="bg-[rgb(167,139,250)] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[rgb(147,119,230)] w-fit"
         >
           <Plus size={18} /> New Invoice
@@ -200,19 +243,18 @@ export default function Billing() {
                   <td className="p-3">₹{inv.totalAmount.toLocaleString()}</td>
                   <td className="p-3">₹{inv.paidAmount.toLocaleString()}</td>
                   <td
-                    className={`p-3 font-medium ${
-                      inv.paymentStatus === "PAID"
+                    className={`p-3 font-medium ${inv.paymentStatus === "PAID"
                         ? "text-green-600"
                         : inv.paymentStatus === "PARTIAL"
-                        ? "text-blue-600"
-                        : "text-orange-600"
-                    }`}
+                          ? "text-blue-600"
+                          : "text-orange-600"
+                      }`}
                   >
                     {inv.paymentStatus}
                   </td>
                   <td className="p-3 flex justify-end gap-3">
                     <button
-                      onClick={() => alert("Preview not linked in demo")}
+                      onClick={() => handleViewInvoice(inv.invoiceNumber)}
                       className="text-gray-600 hover:text-gray-800"
                     >
                       <Eye size={18} />
@@ -243,21 +285,32 @@ export default function Billing() {
         </table>
       </div>
 
-      {/* Create/Edit Invoice Form - LARGER MODAL */}
+      {/* Create/Edit Invoice Form - FULL PAGE */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-start z-50 p-4 pt-10 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-5xl max-h-[90vh]"> {/* ← Updated size */}
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">
-              {editInvoice ? "Edit Invoice" : "Create New Invoice"}
-            </h3>
+        <div className="min-h-screen bg-white p-4 sm:p-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-semibold text-gray-800">
+                {editInvoice ? "Edit Invoice" : "Create New Invoice"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select
                   name="patientId"
                   value={formData.patientId}
                   onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-                  className="w-full border rounded-lg p-2"
+                  className="w-full border rounded-lg p-3"
                   required
                 >
                   <option value="">Select Patient</option>
@@ -273,7 +326,7 @@ export default function Billing() {
                   type="date"
                   value={formData.issuedAt}
                   onChange={(e) => setFormData({ ...formData, issuedAt: e.target.value })}
-                  className="w-full border rounded-lg p-2"
+                  className="w-full border rounded-lg p-3"
                   required
                 />
 
@@ -282,29 +335,29 @@ export default function Billing() {
                   type="date"
                   value={formData.dueAt}
                   readOnly
-                  className="w-full border rounded-lg p-2 bg-gray-100"
+                  className="w-full border rounded-lg p-3 bg-gray-100"
                 />
               </div>
 
               {/* Line Items */}
               <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-gray-700">Billing Items</h4>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="font-medium text-gray-700 text-lg">Billing Items</h4>
                   <button
                     type="button"
                     onClick={addLineItem}
-                    className="text-sm text-purple-600 hover:underline"
+                    className="text-purple-600 hover:underline flex items-center gap-1"
                   >
-                    + Add Item
+                    <Plus size={16} /> Add Item
                   </button>
                 </div>
 
                 {lineItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 mb-3 items-end">
+                  <div key={index} className="grid grid-cols-12 gap-3 mb-4 items-end">
                     <select
                       value={item.serviceId}
                       onChange={(e) => handleLineItemChange(index, "serviceId", e.target.value)}
-                      className="col-span-4 border rounded p-2 text-sm"
+                      className="col-span-4 border rounded p-3"
                     >
                       <option value="">Select Service</option>
                       {mockServices.map((s) => (
@@ -318,7 +371,7 @@ export default function Billing() {
                       value={item.description}
                       onChange={(e) => handleLineItemChange(index, "description", e.target.value)}
                       placeholder="Description"
-                      className="col-span-3 border rounded p-2 text-sm"
+                      className="col-span-3 border rounded p-3"
                       required
                     />
                     <input
@@ -326,7 +379,7 @@ export default function Billing() {
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleLineItemChange(index, "quantity", e.target.value)}
-                      className="col-span-1 border rounded p-2 text-sm text-right"
+                      className="col-span-1 border rounded p-3 text-right"
                       required
                     />
                     <input
@@ -336,14 +389,14 @@ export default function Billing() {
                       value={item.rate}
                       onChange={(e) => handleLineItemChange(index, "rate", e.target.value)}
                       placeholder="Rate"
-                      className="col-span-2 border rounded p-2 text-sm text-right"
+                      className="col-span-2 border rounded p-3 text-right"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => removeLineItem(index)}
                       disabled={lineItems.length === 1}
-                      className="col-span-2 text-red-500 hover:text-red-700 text-sm disabled:opacity-30"
+                      className="col-span-2 text-red-500 hover:text-red-700 disabled:opacity-30 py-2"
                     >
                       Remove
                     </button>
@@ -352,10 +405,10 @@ export default function Billing() {
               </div>
 
               {/* Summary */}
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between">
-                  <span className="font-medium">Total Amount:</span>
-                  <span className="font-bold text-lg">₹{totalAmount.toLocaleString()}</span>
+                  <span className="font-medium text-lg">Total Amount:</span>
+                  <span className="font-bold text-xl">₹{totalAmount.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -363,7 +416,7 @@ export default function Billing() {
                 name="paymentMode"
                 value={formData.paymentMode}
                 onChange={(e) => setFormData({ ...formData, paymentMode: e.target.value })}
-                className="w-full border rounded-lg p-2"
+                className="w-full border rounded-lg p-3"
                 required
               >
                 <option value="">Select Payment Mode</option>
@@ -374,126 +427,25 @@ export default function Billing() {
                 <option value="NEFT">NEFT/RTGS</option>
               </select>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-4 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+                  className="px-6 py-3 border rounded-lg hover:bg-gray-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[rgb(167,139,250)] px-4 py-2 text-white rounded-lg hover:bg-[rgb(147,119,230)]"
+                  className="bg-[rgb(167,139,250)] px-6 py-3 text-white rounded-lg hover:bg-[rgb(147,119,230)]"
                 >
                   Generate Bill
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Invoice Preview Modal */}
-      {showPreview && previewData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden">
-            <div className="border-b p-6 pb-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-purple-700">ClinicCare Hospital</h2>
-                  <p className="text-gray-600 text-sm mt-1">
-                    #456, Health Avenue, Bangalore • 📞 +91 98765 43210
-                  </p>
-                  <p className="text-gray-500 text-xs">GSTIN: 29AABCCDD1234F1Z5</p>
-                </div>
-                <div className="text-right">
-                  <h3 className="text-xl font-bold">INVOICE</h3>
-                  <p className="text-gray-700">{previewData.invoiceNumber}</p>
-                  <p className="text-sm text-gray-500">
-                    Date: {new Date(previewData.issuedAt).toLocaleDateString("en-IN")}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Patient & Doctor Info */}
-            <div className="grid grid-cols-2 gap-6 p-6 pt-2">
-              <div>
-                <h4 className="font-medium text-gray-700">Billed To:</h4>
-                <p className="font-medium">
-                  {previewData.patient.user.firstName} {previewData.patient.user.lastName}
-                </p>
-                <p>📱 {previewData.patient.phone}</p>
-                <p>
-                  Age:{" "}
-                  {Math.floor(
-                    (new Date() - new Date(previewData.patient.dob)) / (365.25 * 24 * 60 * 60 * 1000)
-                  )}
-                </p>
-              </div>
-              <div className="text-right">
-                <h4 className="font-medium text-gray-700">Attending Doctor:</h4>
-                <p className="font-medium">Dr. Deep Depnashwani</p>
-                <p className="text-sm">Specialization: General Physician</p>
-                <p className="text-sm">Employee ID: 3</p>
-              </div>
-            </div>
-
-            {/* Line Items Table */}
-            <div className="px-6">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Description</th>
-                    <th className="text-right py-2">Qty</th>
-                    <th className="text-right py-2">Rate (₹)</th>
-                    <th className="text-right py-2">Amount (₹)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewData.lineItems.map((item, idx) => (
-                    <tr key={idx} className="border-b border-gray-100">
-                      <td className="py-2">{item.description}</td>
-                      <td className="text-right py-2">{item.quantity}</td>
-                      <td className="text-right py-2">{Number(item.rate).toLocaleString()}</td>
-                      <td className="text-right py-2">
-                        {(item.quantity * item.rate).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="font-bold">
-                    <td colSpan="3" className="text-right py-2">
-                      Total Amount:
-                    </td>
-                    <td className="text-right py-2">₹{previewData.totalAmount.toLocaleString()}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            <div className="border-t p-6 pt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setShowPreview(false)}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  alert("✅ Bill saved! (UI Demo)");
-                  setShowPreview(false);
-                }}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-              >
-                Save & Close
-              </button>
-            </div>
           </div>
         </div>
       )}

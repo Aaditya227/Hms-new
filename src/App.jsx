@@ -38,6 +38,7 @@ const Pharmacy = lazyImport(() => import("./pages/Pharmacy"));
 const Laboratory = lazyImport(() => import("./pages/Laboratory"));
 const Radiology = lazyImport(() => import("./pages/Radiology"));
 const Billing = lazyImport(() => import("./pages/Billing"));
+const BillingInvoice = lazyImport(() => import("./pages/BillingInvoice"));
 const Staff = lazyImport(() => import("./pages/Staff"));
 const Reports = lazyImport(() => import("./pages/Reports"));
 const LocationTracker = lazyImport(() => import("./pages/LocationTracker"));
@@ -184,6 +185,7 @@ function App() {
                 { path: "laboratory", Component: Laboratory },
                 { path: "radiology", Component: Radiology },
                 { path: "billing", Component: Billing },
+                {path: "billing-invoice", Component: BillingInvoice},
                 { path: "staff", Component: Staff },
                 { path: "reports", Component: Reports },
                 { path: "locationtracker", Component: LocationTracker },//mukul add this line
