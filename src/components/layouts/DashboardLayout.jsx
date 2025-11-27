@@ -50,15 +50,19 @@ const navItems = [
   { label: "Radiology", path: "/dashboard/doctors-radiology", icon: Activity, roles: ["DOCTOR"] },
   {label: "Lab Report", path: "/dashboard/doctor-lab-report", icon: FlaskConical, roles: ["DOCTOR"] },
   {label: "Radiology Report", path: "/dashboard/doctor-radiology-report", icon: Activity, roles: ["DOCTOR"] },
-  { label: "Pharmacy", path: "/dashboard/doctor-pharmacy", icon: Pill, roles: ["DOCTOR"] },
+
   // Nurse
   { label: "Patient", path: "/dashboard/nursepatient", icon: Users, roles: ["NURSE"] },
   { label: "Prescriptions", path: "/dashboard/nurse-prescriptions", icon: FileText, roles: ["NURSE"] },
   { label: "Radiology Report", path: "/dashboard/nurse-radiology-report", icon: Activity, roles: ["NURSE"] },
   { label: "Lab Report", path: "/dashboard/nurse-lab-report", icon: FlaskConical, roles: ["NURSE"] },
+
   // Receptionist
   { label: "Patients", path: "/dashboard/receptionist-patients", icon: Users, roles: ["RECEPTIONIST"] },
   { label: "Appointments", path: "/dashboard/receptionist-appointments", icon: Calendar, roles: ["RECEPTIONIST"] },
+  { label: "Billing", path: "/dashboard/receptionist-billing", icon: DollarSign, roles: ["RECEPTIONIST"] },
+  { label: "Doctor Availability", path: "/dashboard/receptionist-doctor-availability", icon: Calendar, roles: ["RECEPTIONIST"] },
+
   // patient
   { label: "Appointment", path: "/dashboard/patient-appointment", icon: Calendar, roles: ["PATIENT"] },
   { label: "Prescriptions", path: "/dashboard/patient-prescriptions", icon: FileText, roles: ["PATIENT"] },
@@ -66,14 +70,19 @@ const navItems = [
   { label: "Lab Report", path: "/dashboard/patient-lab-report", icon: FlaskConical, roles: ["PATIENT"] },
   { label: "Radiology Report", path: "/dashboard/patient-radiology", icon: Activity, roles: ["PATIENT"] },
   { label: "Payment History", path: "/dashboard/patient-payment-history", icon: DollarSign, roles: ["PATIENT"] },
+
   // Pharmacist
   { label: "Pharmacy", path: "/dashboard/pharmacist-pharmacy", icon: Pill, roles: ["PHARMASTIC"] },
+  { label: "Prescriptions", path: "/dashboard/pharmacist-prescriptions", icon: FileText, roles: ["PHARMASTIC"] },
+
   // Lab Tech
   { label: "Lab Request", path: "/dashboard/lab-request", icon: FlaskConical, roles: ["LABTECH"] },
   { label: "Lab Report", path: "/dashboard/lab-report", icon: FileText, roles: ["LABTECH"] },
+
   // Radiologist 
   { label: "Radiology Request", path: "/dashboard/radiology-request", icon: Activity, roles: ["RADIOLOGIST"] },
   { label: "Radiology Report", path: "/dashboard/radiology-report", icon: FileText, roles: ["RADIOLOGIST"] },
+  
   // Common
   { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN"] },
   { label: "Department", path: "/dashboard/department", icon: Blocks, roles: ["ADMIN"] },

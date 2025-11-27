@@ -14,31 +14,31 @@ export default function DoctorLabReport() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Get patient ID from localStorage
+  // Get doctor ID from localStorage
   useEffect(() => {
     try {
       const authData = JSON.parse(localStorage.getItem("authData") || "{}");
-      if (authData.user && authData.user.id) {
-        setPatientId(authData.user.id);
+      if (authData.employee && authData.employee.id) {
+        setDoctorId(authData.employee.id);
       }
     } catch (error) {
       console.error("Error parsing auth data from localStorage:", error);
     }
   }, []);
 
-  // Fetch reports for the specific patient
+  // Fetch reports for the specific doctor
   useEffect(() => {
-    if (patientId) {
-      fetchPatientReports();
+    if (doctorId) {
+      fetchDoctorReports();
     }
-  }, [patientId]);
+  }, [doctorId]);
 
-  const fetchPatientReports = async () => {
-    if (!patientId) return;
+  const fetchDoctorReports = async () => {
+    if (!doctorId) return;
     
     try {
       setLoading(true);
-      const res = await axios.get(`${base_url}/labs/lab-results/patient/${patientId}`);
+      const res = await axios.get(`${base_url}/labs/lab-results/doctor/${doctorId}`);
       setReports(res.data.data || []);
     } catch (error) {
       console.error("Error fetching lab reports:", error);
@@ -79,10 +79,10 @@ export default function DoctorLabReport() {
       <div className="flex flex-wrap items-center justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-display font-bold text-gray-900">
-            My Lab Reports
+            Lab Reports
           </h1>
           <p className="text-gray-600 mt-1">
-            View your lab test results and report information
+            View lab test results and report information for your patients
           </p>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function DoctorLabReport() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by report type, or ID..."
+              placeholder="Search by patient name, report type, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -146,6 +146,7 @@ export default function DoctorLabReport() {
             <DataTable
               data={filteredReports}
               columns={[
+                { header: "Patient Name", accessor: "patient_name" },
                 { header: "Report Type", accessor: "report_type" },
                 {
                   header: "Date",
@@ -211,6 +212,9 @@ export default function DoctorLabReport() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">
             <p>
               <strong>ID:</strong> {selectedReport.id}
+            </p>
+            <p>
+              <strong>Patient Name:</strong> {selectedReport.patient_name}
             </p>
             <p>
               <strong>Report Type:</strong> {selectedReport.report_type}

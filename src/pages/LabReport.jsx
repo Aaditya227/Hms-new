@@ -226,10 +226,6 @@ export function LabReport() {
                 ),
               },
               {
-                header: "Report Date",
-                accessor: (row) => row.reportDate || "-",
-              },
-              {
                 header: "Actions",
                 accessor: (row) => (
                   <div className="flex gap-2">

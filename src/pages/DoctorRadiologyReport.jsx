@@ -13,51 +13,40 @@ export default function DoctorRadiologyReport() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Fetch reports for the specific patient
+  // Fetch reports for the specific doctor
   useEffect(() => {
-    fetchPatientReports();
+    fetchDoctorReports();
   }, []);
 
-  const fetchPatientReports = async () => {
+  const fetchDoctorReports = async () => {
     try {
       setLoading(true);
       
-      // Get patient ID from localStorage
+      // Get doctor ID from localStorage
       const authData = JSON.parse(localStorage.getItem("authData") || "{}");
-      const patientId = authData.user?.id;
+      const doctorId = authData.employee?.id;
       
-      if (!patientId) {
-        console.error("Patient ID not found in authData");
+      if (!doctorId) {
+        console.error("Doctor ID not found in authData");
         setLoading(false);
         return;
       }
       
-      // Fetch reports for the specific patient
-      const res = await axios.get(`${base_url}/radiology/results/patient/${patientId}`);
+      // Fetch reports for the specific doctor
+      const res = await axios.get(`${base_url}/radiology/results/doctor/${doctorId}`);
       setReports(res.data.data || []);
     } catch (error) {
-      console.error("Error fetching patient radiology reports:", error);
+      console.error("Error fetching doctor radiology reports:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete Report
-  const handleDeleteReport = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this report?")) return;
-
-    try {
-      await axios.delete(`${base_url}/radiologyreports/${id}`);
-      setReports((prev) => prev.filter((r) => r.id !== id));
-    } catch (error) {
-      console.error("Error deleting radiology report:", error);
-    }
-  };
 
   // Filter search
   const filteredReports = reports.filter((r) =>
     r.patient_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.report_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.test_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.id?.toString().includes(searchQuery)
   );
 
@@ -74,10 +63,10 @@ export default function DoctorRadiologyReport() {
       <div className="flex flex-wrap items-center justify-between gap-3 mt-10">
         <div>
           <h1 className="text-3xl font-display font-bold text-gray-900">
-            My Radiology Reports
+            Radiology Reports
           </h1>
           <p className="text-gray-600 mt-1">
-            View your radiology test results and report information
+            View radiology test results for your patients
           </p>
         </div>
       </div>
@@ -123,7 +112,7 @@ export default function DoctorRadiologyReport() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by report type, or ID..."
+              placeholder="Search by patient name, test name, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -141,10 +130,11 @@ export default function DoctorRadiologyReport() {
             <DataTable
               data={filteredReports}
               columns={[
-                { header: "Report Type", accessor: "report_type" },
+                { header: "Patient Name", accessor: "patient_name" },
+                { header: "Test Name", accessor: "test_name" },
                 {
-                  header: "Date",
-                  accessor: (r) => r.date?.split("T")[0],
+                  header: "Requested Date",
+                  accessor: (r) => r.requested_at?.split("T")[0],
                 },
                 {
                   header: "Status",
@@ -175,15 +165,6 @@ export default function DoctorRadiologyReport() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-
-                      {/* Delete */}
-                      <button
-                        onClick={() => handleDeleteReport(r.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   ),
                 },
@@ -205,24 +186,32 @@ export default function DoctorRadiologyReport() {
         {selectedReport && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-800">
             <p>
-              <strong>ID:</strong> {selectedReport.id}
+              <strong>Report ID:</strong> {selectedReport.id}
             </p>
             <p>
-              <strong>Report Type:</strong> {selectedReport.report_type}
+              <strong>Patient Name:</strong> {selectedReport.patient_name}
             </p>
             <p>
-              <strong>Date:</strong>{" "}
-              {selectedReport.date?.split("T")[0]}
+              <strong>Test Name:</strong> {selectedReport.test_name}
+            </p>
+            <p>
+              <strong>Requested Date:</strong>{" "}
+              {selectedReport.requested_at?.split("T")[0]}
             </p>
             <p>
               <strong>Status:</strong> {selectedReport.status}
             </p>
-            <p className="col-span-2">
-              <strong>Description:</strong>{" "}
-              {selectedReport.description || "—"}
+            <p>
+              <strong>Patient ID:</strong> {selectedReport.patient_id}
+            </p>
+            <p>
+              <strong>Test ID:</strong> {selectedReport.test_id}
+            </p>
+            <p>
+              <strong>Doctor Name:</strong> {selectedReport.doctor_name}
             </p>
 
-            {/* File attachment */}
+            {/* File attachment if available */}
             {selectedReport.file_url && (
               <p className="col-span-2 mt-2">
                 <a
