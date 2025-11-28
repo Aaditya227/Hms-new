@@ -6,6 +6,7 @@ import { DataTable } from "../components/common/DataTable";
 import { Modal } from "../components/common/Modal";
 import base_url from "../utils/baseurl";
 import { useNavigate } from "react-router-dom";
+import { PatientRegistrationForm } from "../components/forms/PatientRegistrationForm";
 
 // Map status (API number) ↔ UI label
 const getStatusLabel = (statusValue) => {
@@ -88,7 +89,7 @@ export function Patients() {
     return age;
   };
 
-  // ✅ Handle Edit Success — now receives patientId separately
+  // Handle Edit Success — now receives patientId separately
   const handleEditSuccess = async (formData, patientId) => {
     try {
       const payload = {
@@ -119,7 +120,7 @@ export function Patients() {
         delete payload.password;
       }
 
-      // ✅ Use patientId from argument (safe!)
+      // Use patientId from argument (safe!)
       await axios.put(`${base_url}/patients/${patientId}`, payload);
       await fetchPatients();
       setEditModalOpen(false);
@@ -311,7 +312,7 @@ export function Patients() {
         )}
       </Modal>
 
-      {/* ✅ EDIT MODAL — pass patientId separately */}
+      {/* EDIT MODAL — pass patientId separately */}
       <Modal
         isOpen={editModalOpen}
         onClose={() => {
@@ -323,8 +324,8 @@ export function Patients() {
         {selectedPatient && (
           <PatientRegistrationForm
             patient={apiPatientToForm(selectedPatient)}
-            patientId={selectedPatient.id} // ✅ Pass ID separately
-           onSuccess={(formData) => handleEditSuccess(formData, selectedPatient.id)} // ✅ Safe!
+            patientId={selectedPatient.id} // Pass ID separately
+            onSuccess={(formData) => handleEditSuccess(formData, selectedPatient.id)} // Safe!
           />
         )}
       </Modal>

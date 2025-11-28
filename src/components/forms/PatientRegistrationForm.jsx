@@ -140,6 +140,21 @@ export function PatientRegistrationForm({ patient, patientId, onSuccess, onCance
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Header with back button on the right */}
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-[#a78bfa]">
+          {patient ? "Edit Patient" : "Register New Patient"}
+        </h1>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => navigate("/dashboard/patients")}
+          className="flex items-center gap-2"
+        >
+          Back 
+        </Button>
+      </div>
+
       {error && (
         <div className="p-3 bg-red-50 border border-red-500 rounded-lg text-red-600 text-sm">
           {error}
