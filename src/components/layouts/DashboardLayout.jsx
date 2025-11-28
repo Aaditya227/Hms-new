@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Sidebar } from "../common/Sidebar";
 import { TopBar } from "../common/TopBar";
 import { useAuth } from "../../context/AuthContext";
@@ -32,8 +32,8 @@ const navItems = [
       "DOCTOR",
       "NURSE",
       "RECEPTIONIST",
-      "PHARMACIST",
-      "LAB_TECH",
+      "PHARMASTIC",
+      "LABTECH",
       "RADIOLOGIST",
       "FINANCE",
       "HR",
@@ -48,8 +48,8 @@ const navItems = [
   { label: "Prescriptions", path: "/dashboard/doctors-prescriptions", icon: FileText, roles: ["DOCTOR"] },
   { label: "Laboratory", path: "/dashboard/doctors-laboratory", icon: FlaskConical, roles: ["DOCTOR"] },
   { label: "Radiology", path: "/dashboard/doctors-radiology", icon: Activity, roles: ["DOCTOR"] },
-  {label: "Lab Report", path: "/dashboard/doctor-lab-report", icon: FlaskConical, roles: ["DOCTOR"] },
-  {label: "Radiology Report", path: "/dashboard/doctor-radiology-report", icon: Activity, roles: ["DOCTOR"] },
+  { label: "Lab Report", path: "/dashboard/doctor-lab-report", icon: FlaskConical, roles: ["DOCTOR"] },
+  { label: "Radiology Report", path: "/dashboard/doctor-radiology-report", icon: Activity, roles: ["DOCTOR"] },
 
   // Nurse
   { label: "Patient", path: "/dashboard/nursepatient", icon: Users, roles: ["NURSE"] },
@@ -63,7 +63,7 @@ const navItems = [
   { label: "Billing", path: "/dashboard/receptionist-billing", icon: DollarSign, roles: ["RECEPTIONIST"] },
   { label: "Doctor Availability", path: "/dashboard/receptionist-doctor-availability", icon: Calendar, roles: ["RECEPTIONIST"] },
 
-  // patient
+  // Patient
   { label: "Appointment", path: "/dashboard/patient-appointment", icon: Calendar, roles: ["PATIENT"] },
   { label: "Prescriptions", path: "/dashboard/patient-prescriptions", icon: FileText, roles: ["PATIENT"] },
   { label: "Doctor", path: "/dashboard/patient-doctor", icon: Users, roles: ["PATIENT"] },
@@ -82,8 +82,8 @@ const navItems = [
   // Radiologist 
   { label: "Radiology Request", path: "/dashboard/radiology-request", icon: Activity, roles: ["RADIOLOGIST"] },
   { label: "Radiology Report", path: "/dashboard/radiology-report", icon: FileText, roles: ["RADIOLOGIST"] },
-  
-  // Common
+
+  // Admin
   { label: "Patients", path: "/dashboard/patients", icon: Users, roles: ["ADMIN"] },
   { label: "Department", path: "/dashboard/department", icon: Blocks, roles: ["ADMIN"] },
   { label: "Appointments", path: "/dashboard/appointments", icon: Calendar, roles: ["ADMIN"] },
@@ -100,10 +100,13 @@ const navItems = [
 ];
 
 // =======================================
-// DASHBOARD LAYOUT FIXED
+// DASHBOARD LAYOUT WITH ROLE REDIRECT
 // =======================================
 export function DashboardLayout() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
 
@@ -116,7 +119,29 @@ export function DashboardLayout() {
     }
   }, [user]);
 
-  // Wait until role is ready
+  // ⭐ Auto redirect to correct dashboard home page
+  useEffect(() => {
+    if (!currentRole) return;
+
+    if (location.pathname === "/dashboard") {
+      const rolePages = {
+        ADMIN: "/dashboard/admin",
+        DOCTOR: "/dashboard/doctor",
+        NURSE: "/dashboard/nurse",
+        RECEPTIONIST: "/dashboard/receptionist",
+        PHARMASTIC: "/dashboard/pharmacist",
+        LABTECH: "/dashboard/labtech",
+        RADIOLOGIST: "/dashboard/radiologist",
+        PATIENT: "/dashboard/patient",
+        AUDITOR: "/dashboard/auditor",
+      };
+
+      const redirectPath = rolePages[currentRole];
+      if (redirectPath) navigate(redirectPath, { replace: true });
+    }
+  }, [currentRole, location.pathname, navigate]);
+
+  // Wait until role is loaded
   if (!currentRole) return null;
 
   return (

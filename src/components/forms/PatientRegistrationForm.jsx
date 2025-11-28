@@ -24,8 +24,6 @@ const calculateAge = (dob) => {
   return age >= 0 ? age : "";
 };
 
-
-
 export const createPatient = async (data) => {
   const response = await axios.post(`${base_url}/patients`, data);
   return response.data;
@@ -36,7 +34,7 @@ export const updatePatient = async (id, data) => {
   return response.data;
 };
 
-export function PatientRegistrationForm({ patient, onSuccess, onCancel }) {
+export function PatientRegistrationForm({ patient, patientId, onSuccess, onCancel }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -63,10 +61,10 @@ export function PatientRegistrationForm({ patient, onSuccess, onCancel }) {
     currentTreatment: patient?.currentTreatment || "",
 
     // Emergency & Insurance
-    emergencyContactName: patient?.emergencyName || "",
-    emergencyContactPhone: patient?.emergencyPhone || "",
+    emergencyContactName: patient?.emergencyContactName || "",
+    emergencyContactPhone: patient?.emergencyContactPhone || "",
     insuranceProvider: patient?.insuranceProvider || "",
-    insuranceNumber: patient?.policyNumber || "", // renamed to match API
+    insuranceNumber: patient?.insuranceNumber || "", // renamed to match API
 
     // Status (UI: "OPD", API: 1)
     status: patient?.status || "OPD",
@@ -123,11 +121,12 @@ export function PatientRegistrationForm({ patient, onSuccess, onCancel }) {
       }
 
       const result = patient
-        ? await updatePatient(patient.id, payload)
+        ? await updatePatient(patientId || patient.id, payload) // Use patientId if provided
         : await createPatient(payload);
 
       if (onSuccess) onSuccess(result);
-      navigate("/patients");
+      // Fixed: Changed from "/patients" to "/dashboard/patients"
+      navigate("/dashboard/patients");
     } catch (err) {
       setError(
         err.response?.data?.message ||

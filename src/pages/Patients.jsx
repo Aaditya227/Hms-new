@@ -4,7 +4,6 @@ import { Users, Plus, Search, Edit2, Eye, Trash2 } from "../lib/icons";
 import { Button } from "../components/common/Button";
 import { DataTable } from "../components/common/DataTable";
 import { Modal } from "../components/common/Modal";
-import { PatientRegistrationForm } from "../components/forms/PatientRegistrationForm";
 import base_url from "../utils/baseurl";
 import { useNavigate } from "react-router-dom";
 
@@ -162,7 +161,7 @@ export function Patients() {
         </div>
         <Button
           icon={Plus}
-          onClick={() => navigate("/patients/add")}
+          onClick={() => navigate("/dashboard/register-patient")}
         >
           Register New Patient
         </Button>
