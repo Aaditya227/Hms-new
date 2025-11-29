@@ -1,6 +1,6 @@
 // Billing.jsx
 import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Eye } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Mock data
@@ -33,6 +33,8 @@ export default function Billing() {
     paymentMode: "",
     issuedAt: new Date().toISOString().split("T")[0],
     dueAt: "",
+    notes: "",
+    status: "PENDING",
   });
 
   // Auto-set due date = issuedAt + 15 days
@@ -87,33 +89,15 @@ export default function Billing() {
       const rate = Number(item.rate) || 0;
       subtotal += qty * rate;
     });
+    
     return subtotal;
   };
 
   const totalAmount = calculateTotals();
 
-  const handleNewInvoice = () => {
-    // Auto-generate invoice number
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(-2);
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const invNum = `INV-${year}${month}-${String(mockInvoices.length + 1).padStart(3, "0")}`;
-
-    // Create default invoice data
-    const invoiceData = {
-      invoiceNumber: invNum,
-      issuedAt: new Date().toISOString().split("T")[0],
-      patient: mockPatients[0], // Default to first patient
-      lineItems: [
-        { description: "General Consultation", quantity: 1, rate: 1200 }
-      ],
-      totalAmount: 1200,
-      paidAmount: 0,
-      paymentStatus: "PENDING",
-    };
-
-    // Navigate to the billing-invoice path with default data
-    navigate("/dashboard/billing-invoice", { state: { invoiceData } });
+  const handleCreateForm = () => {
+    setShowForm(true);
+    resetForm();
   };
 
   const handleSubmit = (e) => {
@@ -126,7 +110,9 @@ export default function Billing() {
     const now = new Date();
     const year = now.getFullYear().toString().slice(-2);
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const invNum = `INV-${year}${month}-${String(mockInvoices.length + 1).padStart(3, "0")}`;
+    const invNum = editInvoice 
+      ? editInvoice.invoiceNumber 
+      : `INV-${year}${month}-${String(mockInvoices.length + 1).padStart(3, "0")}`;
 
     const invoiceData = {
       ...formData,
@@ -138,12 +124,12 @@ export default function Billing() {
         rate: Number(item.rate) || 0,
       })),
       totalAmount,
-      paidAmount: 0,
-      paymentStatus: "PENDING",
+      paidAmount: formData.status === "PAID" ? totalAmount : 0,
+      paymentStatus: formData.status,
     };
 
     // Navigate to the billing-invoice path
-    navigate("/billing-invoice", { state: { invoiceData } });
+    navigate("/dashboard/billing-invoice", { state: { invoiceData } });
     setShowForm(false);
   };
 
@@ -154,13 +140,43 @@ export default function Billing() {
       paymentMode: "",
       issuedAt: new Date().toISOString().split("T")[0],
       dueAt: "",
+      notes: "",
+      status: "PENDING",
     });
     setLineItems([initialLineItem]);
     setEditInvoice(null);
   };
 
   const handleEdit = (invoice) => {
-    alert("Edit with line items not implemented in demo");
+    // Set the edit invoice data
+    setEditInvoice(invoice);
+    
+    // Populate form with invoice data
+    setFormData({
+      invoiceType: invoice.invoiceType,
+      patientId: invoice.patient.id,
+      paymentMode: invoice.paymentMode || "",
+      issuedAt: invoice.issuedAt || new Date().toISOString().split("T")[0],
+      dueAt: invoice.dueAt || "",
+      notes: invoice.notes || "",
+      status: invoice.paymentStatus,
+    });
+    
+    // Populate line items with invoice data
+    if (invoice.lineItems && invoice.lineItems.length > 0) {
+      const formattedLineItems = invoice.lineItems.map(item => ({
+        serviceId: item.serviceId || "",
+        description: item.description,
+        quantity: item.quantity,
+        rate: item.rate
+      }));
+      setLineItems(formattedLineItems);
+    } else {
+      setLineItems([initialLineItem]);
+    }
+    
+    // Show the form modal
+    setShowForm(true);
   };
 
   const handleDelete = (id) => {
@@ -172,7 +188,7 @@ export default function Billing() {
     const invoice = mockInvoices.find(inv => inv.invoiceNumber === invoiceId);
 
     if (invoice) {
-      navigate("/billing-invoice", {
+      navigate("/dashboard/billing-invoice", {
         state: {
           invoiceData: {
             ...invoice,
@@ -186,7 +202,7 @@ export default function Billing() {
         }
       });
     } else {
-      navigate("/billing-invoice");
+      navigate("/dashboard/billing-invoice");
     }
   };
 
@@ -196,11 +212,35 @@ export default function Billing() {
       id: 1,
       invoiceNumber: "INV-2511-001",
       invoiceType: "CONSULTATION",
-      patient: { user: { firstName: "Rahul", lastName: "Sharma" } },
+      patient: { id: 1, user: { firstName: "Rahul", lastName: "Sharma" } },
       totalAmount: 1200,
       paidAmount: 1200,
       paymentStatus: "PAID",
+      paymentMode: "CASH",
+      issuedAt: "2025-11-01",
+      dueAt: "2025-11-16",
+      notes: "Regular consultation fee",
+      lineItems: [
+        { serviceId: "CONSULT", description: "General Consultation", quantity: 1, rate: 1200 }
+      ]
     },
+    {
+      id: 2,
+      invoiceNumber: "INV-2511-002",
+      invoiceType: "LAB_TESTS",
+      patient: { id: 2, user: { firstName: "Priya", lastName: "Mehta" } },
+      totalAmount: 950,
+      paidAmount: 500,
+      paymentStatus: "PARTIAL",
+      paymentMode: "CARD",
+      issuedAt: "2025-11-05",
+      dueAt: "2025-11-20",
+      notes: "Blood tests and X-ray",
+      lineItems: [
+        { serviceId: "CBC", description: "Complete Blood Count (CBC)", quantity: 1, rate: 350 },
+        { serviceId: "XRAY", description: "X-Ray (Single View)", quantity: 1, rate: 600 }
+      ]
+    }
   ];
 
   return (
@@ -208,10 +248,10 @@ export default function Billing() {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">🧾 Billing Management</h2>
         <button
-          onClick={handleNewInvoice}
+          onClick={handleCreateForm}
           className="bg-[rgb(167,139,250)] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[rgb(147,119,230)] w-fit"
         >
-          <Plus size={18} /> New Invoice
+          <Plus size={18} /> Create Invoice
         </button>
       </div>
 
@@ -285,12 +325,12 @@ export default function Billing() {
         </table>
       </div>
 
-      {/* Create/Edit Invoice Form - FULL PAGE */}
+      {/* Create/Edit Invoice Modal */}
       {showForm && (
-        <div className="min-h-screen bg-white p-4 sm:p-8">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-semibold text-gray-800">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-gray-800">
                 {editInvoice ? "Edit Invoice" : "Create New Invoice"}
               </h3>
               <button
@@ -300,11 +340,11 @@ export default function Billing() {
                 }}
                 className="text-gray-500 hover:text-gray-700"
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select
                   name="patientId"
@@ -319,6 +359,21 @@ export default function Billing() {
                       {p.user.firstName} {p.user.lastName} • {p.phone}
                     </option>
                   ))}
+                </select>
+
+                <select
+                  name="invoiceType"
+                  value={formData.invoiceType}
+                  onChange={(e) => setFormData({ ...formData, invoiceType: e.target.value })}
+                  className="w-full border rounded-lg p-3"
+                  required
+                >
+                  <option value="">Select Invoice Type</option>
+                  <option value="CONSULTATION">Consultation</option>
+                  <option value="PROCEDURE">Procedure</option>
+                  <option value="MEDICINES">Medicines</option>
+                  <option value="LAB_TESTS">Lab Tests</option>
+                  <option value="COMBINED">Combined</option>
                 </select>
 
                 <input
@@ -336,6 +391,47 @@ export default function Billing() {
                   value={formData.dueAt}
                   readOnly
                   className="w-full border rounded-lg p-3 bg-gray-100"
+                />
+
+                <select
+                  name="paymentMode"
+                  value={formData.paymentMode}
+                  onChange={(e) => setFormData({ ...formData, paymentMode: e.target.value })}
+                  className="w-full border rounded-lg p-3"
+                  required
+                >
+                  <option value="">Select Payment Mode</option>
+                  <option value="CASH">Cash</option>
+                  <option value="CARD">Card</option>
+                  <option value="UPI">UPI</option>
+                  <option value="INSURANCE">Insurance</option>
+                  <option value="NEFT">NEFT/RTGS</option>
+                </select>
+
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full border rounded-lg p-3"
+                  required
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="PAID">Paid</option>
+                  <option value="PARTIAL">Partial</option>
+                  <option value="OVERDUE">Overdue</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full border rounded-lg p-3"
+                  rows="3"
+                  placeholder="Additional notes..."
                 />
               </div>
 
@@ -412,21 +508,6 @@ export default function Billing() {
                 </div>
               </div>
 
-              <select
-                name="paymentMode"
-                value={formData.paymentMode}
-                onChange={(e) => setFormData({ ...formData, paymentMode: e.target.value })}
-                className="w-full border rounded-lg p-3"
-                required
-              >
-                <option value="">Select Payment Mode</option>
-                <option value="CASH">Cash</option>
-                <option value="CARD">Card</option>
-                <option value="UPI">UPI</option>
-                <option value="INSURANCE">Insurance</option>
-                <option value="NEFT">NEFT/RTGS</option>
-              </select>
-
               <div className="flex justify-end gap-4 pt-4">
                 <button
                   type="button"
@@ -442,7 +523,7 @@ export default function Billing() {
                   type="submit"
                   className="bg-[rgb(167,139,250)] px-6 py-3 text-white rounded-lg hover:bg-[rgb(147,119,230)]"
                 >
-                  Generate Bill
+                  {editInvoice ? "Update Invoice" : "Create Invoice"}
                 </button>
               </div>
             </form>
